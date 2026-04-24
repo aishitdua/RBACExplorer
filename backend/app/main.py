@@ -2,6 +2,8 @@ import logging
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.requests import Request
 
 from app.database import settings
 from app.routers import (
@@ -39,6 +41,19 @@ app.add_middleware(
     allow_headers=["*"],
     allow_credentials=len(cors_origins) > 0 and cors_origins != ["*"],
 )
+
+
+class SecurityHeadersMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next):
+        response = await call_next(request)
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        response.headers["X-Frame-Options"] = "DENY"
+        response.headers["Referrer-Policy"] = "no-referrer"
+        response.headers["X-XSS-Protection"] = "1; mode=block"
+        return response
+
+
+app.add_middleware(SecurityHeadersMiddleware)
 
 app.include_router(projects.router, prefix="/api/v1")
 app.include_router(roles.router, prefix="/api/v1")
