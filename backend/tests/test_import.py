@@ -1,6 +1,3 @@
-import pytest, json
-
-
 async def test_import_openapi_creates_resources(client):
     await client.post("/api/v1/projects", json={"name": "Test"})
     openapi = {
@@ -8,7 +5,7 @@ async def test_import_openapi_creates_resources(client):
         "paths": {
             "/users": {"get": {}, "post": {}},
             "/users/{id}": {"get": {}, "delete": {}},
-        }
+        },
     }
     r = await client.post("/api/v1/projects/test/import/openapi", json=openapi)
     assert r.status_code == 200

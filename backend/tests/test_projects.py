@@ -1,6 +1,3 @@
-import pytest
-
-
 async def test_create_project_auto_slug(client):
     r = await client.post("/api/v1/projects", json={"name": "My SaaS App"})
     assert r.status_code == 201
@@ -10,7 +7,9 @@ async def test_create_project_auto_slug(client):
 
 
 async def test_create_project_custom_slug(client):
-    r = await client.post("/api/v1/projects", json={"name": "App", "slug": "custom-slug"})
+    r = await client.post(
+        "/api/v1/projects", json={"name": "App", "slug": "custom-slug"}
+    )
     assert r.status_code == 201
     assert r.json()["slug"] == "custom-slug"
 

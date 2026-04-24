@@ -3,12 +3,14 @@
 This is a FastAPI-powered asynchronous backend for managing RBAC data.
 
 ## 🧱 Key Components
+
 - **FastAPI**: Main API framework.
 - **SQLAlchemy (Async)**: Database ORM for SQLite.
 - **Alembic**: Database versioning and migrations.
 - **PyYAML**: High-level YAML parsing for nested role structures.
 
 ## 🚀 Local Development
+
 1. **Initialize Environment**:
    ```bash
    python -m venv venv
@@ -25,6 +27,7 @@ This is a FastAPI-powered asynchronous backend for managing RBAC data.
    ```
 
 ## 📡 API Highlights
+
 - `GET /api/v1/projects`: List all design projects.
 - `POST /api/v1/projects/{slug}/import/yaml`: Smart YAML importer with inheritance detection.
 - `GET /api/v1/projects/{slug}/simulate`: Path-based permission simulator.

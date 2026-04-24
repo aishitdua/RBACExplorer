@@ -1,12 +1,12 @@
-from pydantic import BaseModel
-from typing import Optional
 from datetime import datetime
+
+from pydantic import BaseModel
 
 
 class ProjectCreate(BaseModel):
     name: str
     description: str = ""
-    slug: Optional[str] = None
+    slug: str | None = None
 
 
 class ProjectOut(BaseModel):
@@ -26,9 +26,9 @@ class RoleCreate(BaseModel):
 
 
 class RoleUpdate(BaseModel):
-    name: Optional[str] = None
-    description: Optional[str] = None
-    color: Optional[str] = None
+    name: str | None = None
+    description: str | None = None
+    color: str | None = None
 
 
 class RoleOut(BaseModel):
@@ -49,8 +49,8 @@ class PermissionCreate(BaseModel):
 
 
 class PermissionUpdate(BaseModel):
-    name: Optional[str] = None
-    description: Optional[str] = None
+    name: str | None = None
+    description: str | None = None
 
 
 class PermissionOut(BaseModel):
@@ -69,9 +69,9 @@ class ResourceCreate(BaseModel):
 
 
 class ResourceUpdate(BaseModel):
-    method: Optional[str] = None
-    path: Optional[str] = None
-    description: Optional[str] = None
+    method: str | None = None
+    path: str | None = None
+    description: str | None = None
 
 
 class ResourceOut(BaseModel):
@@ -89,8 +89,8 @@ class SimulatedResource(BaseModel):
     method: str
     path: str
     allowed: bool
-    granted_by_permission: Optional[str] = None
-    granted_by_role: Optional[str] = None
+    granted_by_permission: str | None = None
+    granted_by_role: str | None = None
 
 
 class SimulateOut(BaseModel):
@@ -122,7 +122,7 @@ class MapResourceBody(BaseModel):
 
 class DiffOut(BaseModel):
     role_id: str
-    gained: list[SimulatedResource]   # resources newly accessible after change
-    lost: list[SimulatedResource]     # resources no longer accessible after change
+    gained: list[SimulatedResource]  # resources newly accessible after change
+    lost: list[SimulatedResource]  # resources no longer accessible after change
     unchanged_allowed: int
     unchanged_denied: int

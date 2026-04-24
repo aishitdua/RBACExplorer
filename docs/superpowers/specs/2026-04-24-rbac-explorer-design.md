@@ -1,6 +1,6 @@
 # RBACExplorer — Design Spec
 
-**Date:** 2026-04-24  
+**Date:** 2026-04-24
 **Status:** Approved
 
 ---
@@ -12,6 +12,7 @@ RBACExplorer is a developer tool for designing, visualising, and simulating Role
 **Target user:** A developer building their own SaaS or web app who wants to model and verify their access control design before or during implementation.
 
 **What makes it unique:**
+
 - Hierarchical roles with multi-level inheritance visualised as a force-directed graph
 - Endpoint-level permission mapping (permissions map to HTTP method + path pairs)
 - Permission simulator — pick a role, see every endpoint it can and cannot access, including inherited access
@@ -23,11 +24,11 @@ RBACExplorer is a developer tool for designing, visualising, and simulating Role
 
 ## Stack
 
-| Layer | Technology | Platform |
-|---|---|---|
-| Frontend | React + Cytoscape.js | Vercel (free forever) |
-| Backend | Python + FastAPI | Render (free tier, cold starts ok) |
-| Database | PostgreSQL (SQLAlchemy async) | Neon (free forever) |
+| Layer    | Technology                    | Platform                           |
+| -------- | ----------------------------- | ---------------------------------- |
+| Frontend | React + Cytoscape.js          | Vercel (free forever)              |
+| Backend  | Python + FastAPI              | Render (free tier, cold starts ok) |
+| Database | PostgreSQL (SQLAlchemy async) | Neon (free forever)                |
 
 **No authentication.** Access is project-scoped via a unique slug URL. Anyone with the slug can view and edit the project. This is intentional for a portfolio demo — auth can be layered on later.
 
@@ -36,6 +37,7 @@ RBACExplorer is a developer tool for designing, visualising, and simulating Role
 ## Data Model
 
 ### `projects`
+
 ```
 id          UUID primary key
 slug        TEXT unique          -- shareable URL identifier e.g. "my-saas-app"
@@ -45,6 +47,7 @@ created_at  TIMESTAMP
 ```
 
 ### `roles`
+
 ```
 id          UUID primary key
 project_id  UUID foreign key → projects
@@ -55,14 +58,17 @@ created_at  TIMESTAMP
 ```
 
 ### `role_inheritance`
+
 ```
 parent_role_id  UUID foreign key → roles
 child_role_id   UUID foreign key → roles
 PRIMARY KEY (parent_role_id, child_role_id)
 ```
+
 A child role inherits all permissions of its parent(s). A role may have multiple parents (DAG, not strict tree).
 
 ### `permissions`
+
 ```
 id          UUID primary key
 project_id  UUID foreign key → projects
@@ -71,6 +77,7 @@ description TEXT
 ```
 
 ### `role_permissions`
+
 ```
 role_id         UUID foreign key → roles
 permission_id   UUID foreign key → permissions
@@ -78,6 +85,7 @@ PRIMARY KEY (role_id, permission_id)
 ```
 
 ### `resources`
+
 ```
 id          UUID primary key
 project_id  UUID foreign key → projects
@@ -87,6 +95,7 @@ description TEXT
 ```
 
 ### `permission_resources`
+
 ```
 permission_id   UUID foreign key → permissions
 resource_id     UUID foreign key → resources
@@ -100,6 +109,7 @@ PRIMARY KEY (permission_id, resource_id)
 All endpoints are prefixed `/api/v1`. All responses are JSON.
 
 ### Projects
+
 ```
 POST   /projects                  -- create project; body: { name, description, slug? }
                                   -- slug is user-provided or auto-generated from name
@@ -109,6 +119,7 @@ DELETE /projects/{slug}           -- delete project and all data
 ```
 
 ### Roles
+
 ```
 GET    /projects/{slug}/roles            -- list roles
 POST   /projects/{slug}/roles            -- create role
@@ -119,6 +130,7 @@ DELETE /projects/{slug}/roles/{id}/parents/{pid}  -- remove parent role
 ```
 
 ### Permissions
+
 ```
 GET    /projects/{slug}/permissions           -- list permissions
 POST   /projects/{slug}/permissions           -- create permission
@@ -129,6 +141,7 @@ DELETE /projects/{slug}/roles/{id}/permissions/{pid}      -- unassign from role
 ```
 
 ### Resources (Endpoints)
+
 ```
 GET    /projects/{slug}/resources             -- list resources
 POST   /projects/{slug}/resources             -- create resource
@@ -139,6 +152,7 @@ DELETE /projects/{slug}/permissions/{id}/resources/{rid}      -- unmap from perm
 ```
 
 ### Intelligence
+
 ```
 GET    /projects/{slug}/simulate/{role_id}    -- resolve full access for a role
 GET    /projects/{slug}/analyze               -- return all conflicts/anomalies
@@ -146,6 +160,7 @@ GET    /projects/{slug}/diff/{role_id}        -- show permission impact of pendi
 ```
 
 ### Export / Import
+
 ```
 GET    /projects/{slug}/export/fastapi        -- return FastAPI Depends() code stubs
 POST   /projects/{slug}/import/openapi        -- body: OpenAPI JSON, creates resources
@@ -158,6 +173,7 @@ POST   /projects/{slug}/import/openapi        -- body: OpenAPI JSON, creates res
 ### Tabs (per project workspace)
 
 **Graph tab**
+
 - Force-directed graph rendered with Cytoscape.js
 - Node types: roles (circles, sized by total resolved permission count) and optionally permissions (smaller circles, togglable)
 - Edges: solid for inheritance, dashed for permission assignment
@@ -165,21 +181,25 @@ POST   /projects/{slug}/import/openapi        -- body: OpenAPI JSON, creates res
 - Drawer shows: direct permissions, inherited permissions (with source role), resolved endpoints
 
 **Roles tab**
+
 - Table of all roles with name, color, parent count, permission count
 - Inline create/edit/delete
 - Parent assignment via multi-select dropdown
 
 **Permissions tab**
+
 - Table of all permissions with name, assigned roles, mapped endpoints
 - Inline create/edit/delete
 - Endpoint mapping via multi-select
 
 **Resources tab**
+
 - Table of all resources (method + path)
 - Inline create/edit/delete
 - Bulk import via OpenAPI JSON paste modal
 
 **Simulator tab**
+
 - Role selector dropdown
 - Full list of all resources in the project
 - Each resource shows: ALLOWED (green) or DENIED (red)
@@ -191,6 +211,7 @@ POST   /projects/{slug}/import/openapi        -- body: OpenAPI JSON, creates res
 ## Permission Simulator Logic
 
 Given role X:
+
 1. Walk `role_inheritance` upward recursively to collect all ancestor role IDs (including X itself)
 2. Collect all `permission_id`s from `role_permissions` for those role IDs
 3. Collect all `resource_id`s from `permission_resources` for those permission IDs
@@ -204,11 +225,11 @@ This is a pure read query — no mutation. Implemented as a recursive CTE in Pos
 
 Run on demand via `GET /projects/{slug}/analyze`. Returns a list of findings:
 
-| Type | Description |
-|---|---|
-| `orphaned_permission` | Permission exists but is assigned to no role |
-| `empty_role` | Role has no direct permissions and no children |
-| `redundant_assignment` | Role explicitly assigned a permission it already inherits from a parent |
+| Type                   | Description                                                                              |
+| ---------------------- | ---------------------------------------------------------------------------------------- |
+| `orphaned_permission`  | Permission exists but is assigned to no role                                             |
+| `empty_role`           | Role has no direct permissions and no children                                           |
+| `redundant_assignment` | Role explicitly assigned a permission it already inherits from a parent                  |
 | `permission_shadowing` | Child role redefines a permission the parent already grants (identical resource mapping) |
 | `circular_inheritance` | Role inheritance graph contains a cycle (blocked at write time, but flagged if detected) |
 
@@ -247,6 +268,7 @@ One stub per resource, using the permission mapped to that resource.
 ## OpenAPI Import
 
 `POST /projects/{slug}/import/openapi` accepts an OpenAPI 3.x JSON body. The backend:
+
 1. Parses `paths` object
 2. For each path + method combination, creates a `resource` record (if not already existing by method+path)
 3. Returns count of created vs skipped resources

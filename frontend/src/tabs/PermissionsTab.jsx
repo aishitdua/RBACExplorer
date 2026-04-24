@@ -1,5 +1,11 @@
 import { useState, useEffect } from 'react'
-import { listPermissions, createPermission, deletePermission, assignPermissionToRole, mapPermissionToResource } from '../api/permissions'
+import {
+  listPermissions,
+  createPermission,
+  deletePermission,
+  assignPermissionToRole,
+  mapPermissionToResource,
+} from '../api/permissions'
 import { listRoles } from '../api/roles'
 import { listResources } from '../api/resources'
 
@@ -9,13 +15,16 @@ export default function PermissionsTab({ slug }) {
   const [resources, setResources] = useState([])
   const [name, setName] = useState('')
 
-  const load = () => Promise.all([
-    listPermissions(slug).then(setPermissions),
-    listRoles(slug).then(setRoles),
-    listResources(slug).then(setResources),
-  ])
+  const load = () =>
+    Promise.all([
+      listPermissions(slug).then(setPermissions),
+      listRoles(slug).then(setRoles),
+      listResources(slug).then(setResources),
+    ])
 
-  useEffect(() => { load() }, [slug])
+  useEffect(() => {
+    load()
+  }, [slug])
 
   const handleCreate = async (e) => {
     e.preventDefault()
@@ -34,7 +43,12 @@ export default function PermissionsTab({ slug }) {
           onChange={(e) => setName(e.target.value)}
           required
         />
-        <button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg">Add permission</button>
+        <button
+          type="submit"
+          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg"
+        >
+          Add permission
+        </button>
       </form>
       <table className="w-full text-sm">
         <thead>
@@ -46,31 +60,48 @@ export default function PermissionsTab({ slug }) {
           </tr>
         </thead>
         <tbody>
-          {permissions.map(perm => (
+          {permissions.map((perm) => (
             <tr key={perm.id} className="border-b border-gray-800 hover:bg-gray-900">
               <td className="py-2 text-white font-mono">{perm.name}</td>
               <td className="py-2">
                 <select
                   className="bg-gray-800 border border-gray-700 rounded px-2 py-1 text-white text-xs"
-                  onChange={(e) => e.target.value && assignPermissionToRole(slug, e.target.value, perm.id)}
+                  onChange={(e) =>
+                    e.target.value && assignPermissionToRole(slug, e.target.value, perm.id)
+                  }
                   defaultValue=""
                 >
                   <option value="">Assign to role…</option>
-                  {roles.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
+                  {roles.map((r) => (
+                    <option key={r.id} value={r.id}>
+                      {r.name}
+                    </option>
+                  ))}
                 </select>
               </td>
               <td className="py-2">
                 <select
                   className="bg-gray-800 border border-gray-700 rounded px-2 py-1 text-white text-xs"
-                  onChange={(e) => e.target.value && mapPermissionToResource(slug, perm.id, e.target.value)}
+                  onChange={(e) =>
+                    e.target.value && mapPermissionToResource(slug, perm.id, e.target.value)
+                  }
                   defaultValue=""
                 >
                   <option value="">Map to endpoint…</option>
-                  {resources.map(r => <option key={r.id} value={r.id}>{r.method} {r.path}</option>)}
+                  {resources.map((r) => (
+                    <option key={r.id} value={r.id}>
+                      {r.method} {r.path}
+                    </option>
+                  ))}
                 </select>
               </td>
               <td className="py-2 text-right">
-                <button onClick={() => deletePermission(slug, perm.id).then(load)} className="text-red-400 hover:text-red-300 text-xs">Delete</button>
+                <button
+                  onClick={() => deletePermission(slug, perm.id).then(load)}
+                  className="text-red-400 hover:text-red-300 text-xs"
+                >
+                  Delete
+                </button>
               </td>
             </tr>
           ))}

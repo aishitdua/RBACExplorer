@@ -9,26 +9,27 @@
 
 ## 🚀 Key Features
 
-*   **📊 Interactive Graph Designer**: Visualize roles, inheritance lines, and permissions in a clean, hierarchical tree.
-*   **📦 Bulk Import System**: Bootstrap projects instantly using nested YAML (Roles/Inheritance) and CSV (Endpoints).
-*   **🤖 Automated Mapping**: Intelligently guesses HTTP methods and paths from permission names during import.
-*   **📂 Compound Grouping**: Permission nodes are automatically grouped by "Service Modules" for architectural clarity.
-*   **📥 YAML Export (IaC)**: Design your architecture visually and download it as an Infrastructure-as-Code YAML file.
-*   **🧪 Permission Simulator**: Test any role against your API paths to verify access in real-time.
+- **📊 Interactive Graph Designer**: Visualize roles, inheritance lines, and permissions in a clean, hierarchical tree.
+- **📦 Bulk Import System**: Bootstrap projects instantly using nested YAML (Roles/Inheritance) and CSV (Endpoints).
+- **🤖 Automated Mapping**: Intelligently guesses HTTP methods and paths from permission names during import.
+- **📂 Compound Grouping**: Permission nodes are automatically grouped by "Service Modules" for architectural clarity.
+- **📥 YAML Export (IaC)**: Design your architecture visually and download it as an Infrastructure-as-Code YAML file.
+- **🧪 Permission Simulator**: Test any role against your API paths to verify access in real-time.
 
 ---
 
 ## 🛠️ Stack
 
-*   **Backend**: FastAPI, SQLAlchemy (Async), SQLite, Pydantic, PyYAML
-*   **Frontend**: React (Vite), Tailwind CSS, Cytoscape.js (fcose/breadthfirst layouts)
-*   **Migrations**: Alembic
+- **Backend**: FastAPI, SQLAlchemy (Async), SQLite, Pydantic, PyYAML
+- **Frontend**: React (Vite), Tailwind CSS, Cytoscape.js (fcose/breadthfirst layouts)
+- **Migrations**: Alembic
 
 ---
 
 ## 📋 Getting Started
 
 ### 1. Backend Setup
+
 ```bash
 cd backend
 python -m venv venv
@@ -39,6 +40,7 @@ uvicorn app.main:app --reload
 ```
 
 ### 2. Frontend Setup
+
 ```bash
 cd frontend
 npm install
@@ -50,11 +52,12 @@ npm run dev
 ## 📄 Configuration Formats
 
 ### YAML Inheritance (Roles)
+
 ```yaml
 developer:
   auth:
     login: "User authentication"
-  
+
 payments_dev:
   include:
     - developer
@@ -63,6 +66,7 @@ payments_dev:
 ```
 
 ### CSV Endpoints (Resources)
+
 ```csv
 method,path,description
 GET,/api/v1/users,List all users

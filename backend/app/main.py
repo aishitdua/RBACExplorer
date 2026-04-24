@@ -1,6 +1,16 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.routers import projects, roles, permissions, resources, simulate, analyze, export, import_
+
+from app.routers import (
+    analyze,
+    export,
+    import_,
+    permissions,
+    projects,
+    resources,
+    roles,
+    simulate,
+)
 
 app = FastAPI(title="RBACExplorer API", version="1.0.0")
 

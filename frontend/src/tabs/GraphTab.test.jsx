@@ -8,7 +8,14 @@ vi.mock('../api/roles')
 vi.mock('../api/permissions')
 
 // Cytoscape is a DOM library — mock it for unit tests
-vi.mock('cytoscape', () => ({ default: vi.fn(() => ({ add: vi.fn(), layout: vi.fn(() => ({ run: vi.fn() })), on: vi.fn(), destroy: vi.fn() })) }))
+vi.mock('cytoscape', () => ({
+  default: vi.fn(() => ({
+    add: vi.fn(),
+    layout: vi.fn(() => ({ run: vi.fn() })),
+    on: vi.fn(),
+    destroy: vi.fn(),
+  })),
+}))
 vi.mock('cytoscape-fcose', () => ({ default: vi.fn() }))
 
 describe('GraphTab', () => {

@@ -5,7 +5,13 @@ import { analyzeProject } from '../api/analyze'
 import ConflictPanel from '../components/ConflictPanel'
 import CodeExportModal from '../components/CodeExportModal'
 
-const METHOD_COLORS = { GET: 'text-green-400', POST: 'text-blue-400', PUT: 'text-yellow-400', PATCH: 'text-orange-400', DELETE: 'text-red-400' }
+const METHOD_COLORS = {
+  GET: 'text-green-400',
+  POST: 'text-blue-400',
+  PUT: 'text-yellow-400',
+  PATCH: 'text-orange-400',
+  DELETE: 'text-red-400',
+}
 
 export default function SimulatorTab({ slug }) {
   const [roles, setRoles] = useState([])
@@ -16,7 +22,7 @@ export default function SimulatorTab({ slug }) {
 
   useEffect(() => {
     listRoles(slug).then(setRoles)
-    analyzeProject(slug).then(r => setFindings(r.findings))
+    analyzeProject(slug).then((r) => setFindings(r.findings))
   }, [slug])
 
   const handleRoleChange = async (e) => {
@@ -42,7 +48,11 @@ export default function SimulatorTab({ slug }) {
             className="bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white w-full"
           >
             <option value="">Select a role…</option>
-            {roles.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
+            {roles.map((r) => (
+              <option key={r.id} value={r.id}>
+                {r.name}
+              </option>
+            ))}
           </select>
         </div>
         <button
@@ -64,16 +74,22 @@ export default function SimulatorTab({ slug }) {
             </tr>
           </thead>
           <tbody>
-            {simulation.resources.map(res => (
+            {simulation.resources.map((res) => (
               <tr key={res.resource_id} className="border-b border-gray-800 hover:bg-gray-900">
                 <td className="py-2">
-                  <span className={`font-mono font-bold text-xs ${METHOD_COLORS[res.method] || 'text-gray-400'}`}>{res.method}</span>
+                  <span
+                    className={`font-mono font-bold text-xs ${METHOD_COLORS[res.method] || 'text-gray-400'}`}
+                  >
+                    {res.method}
+                  </span>
                 </td>
                 <td className="py-2 text-white font-mono">{res.path}</td>
                 <td className="py-2">
-                  {res.allowed
-                    ? <span className="text-green-400 font-semibold text-xs">ALLOWED</span>
-                    : <span className="text-red-400 font-semibold text-xs">DENIED</span>}
+                  {res.allowed ? (
+                    <span className="text-green-400 font-semibold text-xs">ALLOWED</span>
+                  ) : (
+                    <span className="text-red-400 font-semibold text-xs">DENIED</span>
+                  )}
                 </td>
                 <td className="py-2 text-gray-500 text-xs">
                   {res.allowed ? `${res.granted_by_permission} (via ${res.granted_by_role})` : '—'}

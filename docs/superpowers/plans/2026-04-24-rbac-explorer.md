@@ -81,6 +81,7 @@ RBACExplorer/
 ## Task 1: Backend scaffolding
 
 **Files:**
+
 - Create: `backend/requirements.txt`
 - Create: `backend/requirements-dev.txt`
 - Create: `backend/.env.example`
@@ -206,6 +207,7 @@ git commit -m "feat: scaffold FastAPI backend with CORS and health endpoint"
 ## Task 2: Database models
 
 **Files:**
+
 - Create: `backend/app/models.py`
 
 - [ ] **Step 1: Write models.py**
@@ -309,6 +311,7 @@ git commit -m "feat: add SQLAlchemy ORM models for all 7 tables"
 ## Task 3: Pydantic schemas + test infrastructure
 
 **Files:**
+
 - Create: `backend/app/schemas.py`
 - Create: `backend/tests/conftest.py`
 
@@ -493,6 +496,7 @@ git commit -m "feat: add Pydantic schemas and async test infrastructure"
 ## Task 4: Projects API
 
 **Files:**
+
 - Create: `backend/app/routers/projects.py`
 - Create: `backend/tests/test_projects.py`
 
@@ -609,6 +613,7 @@ git commit -m "feat: add projects CRUD API with slug generation"
 ## Task 5: Roles API with cycle detection
 
 **Files:**
+
 - Create: `backend/app/routers/roles.py`
 - Create: `backend/tests/test_roles.py`
 
@@ -811,6 +816,7 @@ git commit -m "feat: add roles API with hierarchical inheritance and cycle detec
 ## Task 6: Permissions + Resources APIs
 
 **Files:**
+
 - Create: `backend/app/routers/permissions.py`
 - Create: `backend/app/routers/resources.py`
 - Create: `backend/tests/test_permissions.py`
@@ -1085,6 +1091,7 @@ git commit -m "feat: add permissions and resources APIs with role/permission map
 ## Task 7: Simulator API
 
 **Files:**
+
 - Create: `backend/app/routers/simulate.py`
 - Create: `backend/tests/test_simulate.py`
 
@@ -1253,6 +1260,7 @@ git commit -m "feat: add simulator API with recursive CTE for inherited access r
 ## Task 8: Analyze + Export + Import APIs
 
 **Files:**
+
 - Create: `backend/app/routers/analyze.py`
 - Create: `backend/app/routers/export.py`
 - Create: `backend/app/routers/import_.py`
@@ -1469,7 +1477,7 @@ async def export_fastapi(slug: str, session: AsyncSession = Depends(get_session)
     return "\n".join(lines)
 ```
 
-- [ ] **Step 5: Write import_.py**
+- [ ] **Step 5: Write import\_.py**
 
 ```python
 from fastapi import APIRouter, Depends, HTTPException
@@ -1534,6 +1542,7 @@ git commit -m "feat: add analyze, export, and import APIs — backend complete"
 ## Task 9: Frontend scaffolding
 
 **Files:**
+
 - Create: `frontend/package.json`
 - Create: `frontend/vite.config.js`
 - Create: `frontend/index.html`
@@ -1555,29 +1564,29 @@ npx tailwindcss init
 - [ ] **Step 2: Configure vite.config.js**
 
 ```js
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
-import tailwindcss from '@tailwindcss/vite'
+import { defineConfig } from "vite";
+import react from "@vitejs/plugin-react";
+import tailwindcss from "@tailwindcss/vite";
 
 export default defineConfig({
   plugins: [react(), tailwindcss()],
   test: {
-    environment: 'jsdom',
+    environment: "jsdom",
     globals: true,
-    setupFiles: './src/test-setup.js',
+    setupFiles: "./src/test-setup.js",
   },
   server: {
     proxy: {
-      '/api': 'http://localhost:8000',
+      "/api": "http://localhost:8000",
     },
   },
-})
+});
 ```
 
 - [ ] **Step 3: Create src/test-setup.js**
 
 ```js
-import '@testing-library/jest-dom'
+import "@testing-library/jest-dom";
 ```
 
 - [ ] **Step 4: Create src/index.css** (Tailwind directives)
@@ -1589,27 +1598,27 @@ import '@testing-library/jest-dom'
 - [ ] **Step 5: Create src/main.jsx**
 
 ```jsx
-import React from 'react'
-import ReactDOM from 'react-dom/client'
-import { BrowserRouter } from 'react-router-dom'
-import App from './App'
-import './index.css'
+import React from "react";
+import ReactDOM from "react-dom/client";
+import { BrowserRouter } from "react-router-dom";
+import App from "./App";
+import "./index.css";
 
-ReactDOM.createRoot(document.getElementById('root')).render(
+ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
     <BrowserRouter>
       <App />
     </BrowserRouter>
-  </React.StrictMode>
-)
+  </React.StrictMode>,
+);
 ```
 
 - [ ] **Step 6: Create src/App.jsx**
 
 ```jsx
-import { Routes, Route } from 'react-router-dom'
-import HomePage from './pages/HomePage'
-import WorkspacePage from './pages/WorkspacePage'
+import { Routes, Route } from "react-router-dom";
+import HomePage from "./pages/HomePage";
+import WorkspacePage from "./pages/WorkspacePage";
 
 export default function App() {
   return (
@@ -1619,7 +1628,7 @@ export default function App() {
         <Route path="/:slug" element={<WorkspacePage />} />
       </Routes>
     </div>
-  )
+  );
 }
 ```
 
@@ -1657,6 +1666,7 @@ git commit -m "feat: scaffold React frontend with Vite, Tailwind, and React Rout
 ## Task 10: API client layer
 
 **Files:**
+
 - Create: `frontend/src/api/client.js`
 - Create: `frontend/src/api/projects.js`
 - Create: `frontend/src/api/roles.js`
@@ -1671,29 +1681,33 @@ git commit -m "feat: scaffold React frontend with Vite, Tailwind, and React Rout
 
 ```js
 // frontend/src/api/projects.test.js
-import { describe, it, expect, vi, beforeEach } from 'vitest'
-import client from './client'
-import { createProject, getProject } from './projects'
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import client from "./client";
+import { createProject, getProject } from "./projects";
 
-vi.mock('./client')
+vi.mock("./client");
 
-describe('projects API', () => {
-  beforeEach(() => vi.clearAllMocks())
+describe("projects API", () => {
+  beforeEach(() => vi.clearAllMocks());
 
-  it('createProject posts to /api/v1/projects', async () => {
-    client.post = vi.fn().mockResolvedValue({ data: { slug: 'my-app', name: 'My App' } })
-    const result = await createProject({ name: 'My App' })
-    expect(client.post).toHaveBeenCalledWith('/api/v1/projects', { name: 'My App' })
-    expect(result.slug).toBe('my-app')
-  })
+  it("createProject posts to /api/v1/projects", async () => {
+    client.post = vi
+      .fn()
+      .mockResolvedValue({ data: { slug: "my-app", name: "My App" } });
+    const result = await createProject({ name: "My App" });
+    expect(client.post).toHaveBeenCalledWith("/api/v1/projects", {
+      name: "My App",
+    });
+    expect(result.slug).toBe("my-app");
+  });
 
-  it('getProject fetches by slug', async () => {
-    client.get = vi.fn().mockResolvedValue({ data: { slug: 'my-app' } })
-    const result = await getProject('my-app')
-    expect(client.get).toHaveBeenCalledWith('/api/v1/projects/my-app')
-    expect(result.slug).toBe('my-app')
-  })
-})
+  it("getProject fetches by slug", async () => {
+    client.get = vi.fn().mockResolvedValue({ data: { slug: "my-app" } });
+    const result = await getProject("my-app");
+    expect(client.get).toHaveBeenCalledWith("/api/v1/projects/my-app");
+    expect(result.slug).toBe("my-app");
+  });
+});
 ```
 
 - [ ] **Step 2: Run test — verify it fails**
@@ -1707,93 +1721,120 @@ Expected: FAIL — module not found
 - [ ] **Step 3: Write client.js**
 
 ```js
-import axios from 'axios'
+import axios from "axios";
 
 const client = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || '',
-})
+  baseURL: import.meta.env.VITE_API_URL || "",
+});
 
-export default client
+export default client;
 ```
 
 - [ ] **Step 4: Write projects.js**
 
 ```js
-import client from './client'
+import client from "./client";
 
-export const createProject = async (data) => (await client.post('/api/v1/projects', data)).data
-export const getProject = async (slug) => (await client.get(`/api/v1/projects/${slug}`)).data
-export const deleteProject = async (slug) => client.delete(`/api/v1/projects/${slug}`)
+export const createProject = async (data) =>
+  (await client.post("/api/v1/projects", data)).data;
+export const getProject = async (slug) =>
+  (await client.get(`/api/v1/projects/${slug}`)).data;
+export const deleteProject = async (slug) =>
+  client.delete(`/api/v1/projects/${slug}`);
 ```
 
 - [ ] **Step 5: Write roles.js**
 
 ```js
-import client from './client'
+import client from "./client";
 
-export const listRoles = async (slug) => (await client.get(`/api/v1/projects/${slug}/roles`)).data
-export const createRole = async (slug, data) => (await client.post(`/api/v1/projects/${slug}/roles`, data)).data
-export const updateRole = async (slug, id, data) => (await client.patch(`/api/v1/projects/${slug}/roles/${id}`, data)).data
-export const deleteRole = async (slug, id) => client.delete(`/api/v1/projects/${slug}/roles/${id}`)
+export const listRoles = async (slug) =>
+  (await client.get(`/api/v1/projects/${slug}/roles`)).data;
+export const createRole = async (slug, data) =>
+  (await client.post(`/api/v1/projects/${slug}/roles`, data)).data;
+export const updateRole = async (slug, id, data) =>
+  (await client.patch(`/api/v1/projects/${slug}/roles/${id}`, data)).data;
+export const deleteRole = async (slug, id) =>
+  client.delete(`/api/v1/projects/${slug}/roles/${id}`);
 export const addParent = async (slug, roleId, parentRoleId) =>
-  client.post(`/api/v1/projects/${slug}/roles/${roleId}/parents`, { parent_role_id: parentRoleId })
+  client.post(`/api/v1/projects/${slug}/roles/${roleId}/parents`, {
+    parent_role_id: parentRoleId,
+  });
 export const removeParent = async (slug, roleId, parentId) =>
-  client.delete(`/api/v1/projects/${slug}/roles/${roleId}/parents/${parentId}`)
+  client.delete(`/api/v1/projects/${slug}/roles/${roleId}/parents/${parentId}`);
 ```
 
 - [ ] **Step 6: Write permissions.js**
 
 ```js
-import client from './client'
+import client from "./client";
 
-export const listPermissions = async (slug) => (await client.get(`/api/v1/projects/${slug}/permissions`)).data
-export const createPermission = async (slug, data) => (await client.post(`/api/v1/projects/${slug}/permissions`, data)).data
-export const updatePermission = async (slug, id, data) => (await client.patch(`/api/v1/projects/${slug}/permissions/${id}`, data)).data
-export const deletePermission = async (slug, id) => client.delete(`/api/v1/projects/${slug}/permissions/${id}`)
+export const listPermissions = async (slug) =>
+  (await client.get(`/api/v1/projects/${slug}/permissions`)).data;
+export const createPermission = async (slug, data) =>
+  (await client.post(`/api/v1/projects/${slug}/permissions`, data)).data;
+export const updatePermission = async (slug, id, data) =>
+  (await client.patch(`/api/v1/projects/${slug}/permissions/${id}`, data)).data;
+export const deletePermission = async (slug, id) =>
+  client.delete(`/api/v1/projects/${slug}/permissions/${id}`);
 export const assignPermissionToRole = async (slug, roleId, permId) =>
-  client.post(`/api/v1/projects/${slug}/roles/${roleId}/permissions/${permId}`)
+  client.post(`/api/v1/projects/${slug}/roles/${roleId}/permissions/${permId}`);
 export const unassignPermissionFromRole = async (slug, roleId, permId) =>
-  client.delete(`/api/v1/projects/${slug}/roles/${roleId}/permissions/${permId}`)
+  client.delete(
+    `/api/v1/projects/${slug}/roles/${roleId}/permissions/${permId}`,
+  );
 export const mapPermissionToResource = async (slug, permId, resId) =>
-  client.post(`/api/v1/projects/${slug}/permissions/${permId}/resources/${resId}`)
+  client.post(
+    `/api/v1/projects/${slug}/permissions/${permId}/resources/${resId}`,
+  );
 export const unmapPermissionFromResource = async (slug, permId, resId) =>
-  client.delete(`/api/v1/projects/${slug}/permissions/${permId}/resources/${resId}`)
+  client.delete(
+    `/api/v1/projects/${slug}/permissions/${permId}/resources/${resId}`,
+  );
 ```
 
-- [ ] **Step 7: Write resources.js, simulate.js, analyze.js, export_.js, import_.js**
+- [ ] **Step 7: Write resources.js, simulate.js, analyze.js, export*.js, import*.js**
 
 ```js
 // resources.js
-import client from './client'
-export const listResources = async (slug) => (await client.get(`/api/v1/projects/${slug}/resources`)).data
-export const createResource = async (slug, data) => (await client.post(`/api/v1/projects/${slug}/resources`, data)).data
-export const updateResource = async (slug, id, data) => (await client.patch(`/api/v1/projects/${slug}/resources/${id}`, data)).data
-export const deleteResource = async (slug, id) => client.delete(`/api/v1/projects/${slug}/resources/${id}`)
+import client from "./client";
+export const listResources = async (slug) =>
+  (await client.get(`/api/v1/projects/${slug}/resources`)).data;
+export const createResource = async (slug, data) =>
+  (await client.post(`/api/v1/projects/${slug}/resources`, data)).data;
+export const updateResource = async (slug, id, data) =>
+  (await client.patch(`/api/v1/projects/${slug}/resources/${id}`, data)).data;
+export const deleteResource = async (slug, id) =>
+  client.delete(`/api/v1/projects/${slug}/resources/${id}`);
 ```
 
 ```js
 // simulate.js
-import client from './client'
-export const simulateRole = async (slug, roleId) => (await client.get(`/api/v1/projects/${slug}/simulate/${roleId}`)).data
+import client from "./client";
+export const simulateRole = async (slug, roleId) =>
+  (await client.get(`/api/v1/projects/${slug}/simulate/${roleId}`)).data;
 ```
 
 ```js
 // analyze.js
-import client from './client'
-export const analyzeProject = async (slug) => (await client.get(`/api/v1/projects/${slug}/analyze`)).data
+import client from "./client";
+export const analyzeProject = async (slug) =>
+  (await client.get(`/api/v1/projects/${slug}/analyze`)).data;
 ```
 
 ```js
 // export_.js
-import client from './client'
-export const exportFastapi = async (slug) => (await client.get(`/api/v1/projects/${slug}/export/fastapi`)).data
+import client from "./client";
+export const exportFastapi = async (slug) =>
+  (await client.get(`/api/v1/projects/${slug}/export/fastapi`)).data;
 ```
 
 ```js
 // import_.js
-import client from './client'
+import client from "./client";
 export const importOpenapi = async (slug, openapiJson) =>
-  (await client.post(`/api/v1/projects/${slug}/import/openapi`, openapiJson)).data
+  (await client.post(`/api/v1/projects/${slug}/import/openapi`, openapiJson))
+    .data;
 ```
 
 - [ ] **Step 8: Run API client tests**
@@ -1816,6 +1857,7 @@ git commit -m "feat: add typed API client layer for all backend endpoints"
 ## Task 11: Home page + Workspace shell
 
 **Files:**
+
 - Create: `frontend/src/pages/HomePage.jsx`
 - Create: `frontend/src/pages/WorkspacePage.jsx`
 
@@ -1823,28 +1865,46 @@ git commit -m "feat: add typed API client layer for all backend endpoints"
 
 ```jsx
 // frontend/src/pages/HomePage.test.jsx
-import { render, screen, fireEvent, waitFor } from '@testing-library/react'
-import { MemoryRouter } from 'react-router-dom'
-import { vi } from 'vitest'
-import HomePage from './HomePage'
-import * as projectsApi from '../api/projects'
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { MemoryRouter } from "react-router-dom";
+import { vi } from "vitest";
+import HomePage from "./HomePage";
+import * as projectsApi from "../api/projects";
 
-vi.mock('../api/projects')
+vi.mock("../api/projects");
 
-describe('HomePage', () => {
-  it('renders create project form', () => {
-    render(<MemoryRouter><HomePage /></MemoryRouter>)
-    expect(screen.getByPlaceholderText(/project name/i)).toBeInTheDocument()
-  })
+describe("HomePage", () => {
+  it("renders create project form", () => {
+    render(
+      <MemoryRouter>
+        <HomePage />
+      </MemoryRouter>,
+    );
+    expect(screen.getByPlaceholderText(/project name/i)).toBeInTheDocument();
+  });
 
-  it('creates a project and redirects', async () => {
-    projectsApi.createProject.mockResolvedValue({ slug: 'my-app', name: 'My App' })
-    render(<MemoryRouter><HomePage /></MemoryRouter>)
-    fireEvent.change(screen.getByPlaceholderText(/project name/i), { target: { value: 'My App' } })
-    fireEvent.click(screen.getByRole('button', { name: /create/i }))
-    await waitFor(() => expect(projectsApi.createProject).toHaveBeenCalledWith({ name: 'My App', description: '' }))
-  })
-})
+  it("creates a project and redirects", async () => {
+    projectsApi.createProject.mockResolvedValue({
+      slug: "my-app",
+      name: "My App",
+    });
+    render(
+      <MemoryRouter>
+        <HomePage />
+      </MemoryRouter>,
+    );
+    fireEvent.change(screen.getByPlaceholderText(/project name/i), {
+      target: { value: "My App" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /create/i }));
+    await waitFor(() =>
+      expect(projectsApi.createProject).toHaveBeenCalledWith({
+        name: "My App",
+        description: "",
+      }),
+    );
+  });
+});
 ```
 
 - [ ] **Step 2: Run test — verify it fails**
@@ -1858,38 +1918,43 @@ Expected: FAIL — component not found
 - [ ] **Step 3: Write HomePage.jsx**
 
 ```jsx
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { createProject } from '../api/projects'
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { createProject } from "../api/projects";
 
 export default function HomePage() {
-  const [name, setName] = useState('')
-  const [description, setDescription] = useState('')
-  const [slug, setSlug] = useState('')
-  const [openSlug, setOpenSlug] = useState('')
-  const [error, setError] = useState('')
-  const navigate = useNavigate()
+  const [name, setName] = useState("");
+  const [description, setDescription] = useState("");
+  const [slug, setSlug] = useState("");
+  const [openSlug, setOpenSlug] = useState("");
+  const [error, setError] = useState("");
+  const navigate = useNavigate();
 
   const handleCreate = async (e) => {
-    e.preventDefault()
-    setError('')
+    e.preventDefault();
+    setError("");
     try {
-      const project = await createProject({ name, description })
-      navigate(`/${project.slug}`)
+      const project = await createProject({ name, description });
+      navigate(`/${project.slug}`);
     } catch (err) {
-      setError(err.response?.data?.detail || 'Failed to create project')
+      setError(err.response?.data?.detail || "Failed to create project");
     }
-  }
+  };
 
   return (
     <div className="min-h-screen flex items-center justify-center p-8">
       <div className="w-full max-w-md space-y-8">
         <div className="text-center">
           <h1 className="text-3xl font-bold text-white">RBACExplorer</h1>
-          <p className="mt-2 text-gray-400">Design and visualise your app's access control</p>
+          <p className="mt-2 text-gray-400">
+            Design and visualise your app's access control
+          </p>
         </div>
 
-        <form onSubmit={handleCreate} className="space-y-4 bg-gray-900 p-6 rounded-xl border border-gray-800">
+        <form
+          onSubmit={handleCreate}
+          className="space-y-4 bg-gray-900 p-6 rounded-xl border border-gray-800"
+        >
           <h2 className="text-lg font-semibold text-white">Create a project</h2>
           {error && <p className="text-red-400 text-sm">{error}</p>}
           <input
@@ -1914,7 +1979,9 @@ export default function HomePage() {
         </form>
 
         <div className="bg-gray-900 p-6 rounded-xl border border-gray-800 space-y-4">
-          <h2 className="text-lg font-semibold text-white">Open existing project</h2>
+          <h2 className="text-lg font-semibold text-white">
+            Open existing project
+          </h2>
           <div className="flex gap-2">
             <input
               className="flex-1 bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
@@ -1932,63 +1999,79 @@ export default function HomePage() {
         </div>
       </div>
     </div>
-  )
+  );
 }
 ```
 
 - [ ] **Step 4: Write WorkspacePage.jsx**
 
 ```jsx
-import { useState, useEffect } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
-import { getProject } from '../api/projects'
-import GraphTab from '../tabs/GraphTab'
-import RolesTab from '../tabs/RolesTab'
-import PermissionsTab from '../tabs/PermissionsTab'
-import ResourcesTab from '../tabs/ResourcesTab'
-import SimulatorTab from '../tabs/SimulatorTab'
+import { useState, useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { getProject } from "../api/projects";
+import GraphTab from "../tabs/GraphTab";
+import RolesTab from "../tabs/RolesTab";
+import PermissionsTab from "../tabs/PermissionsTab";
+import ResourcesTab from "../tabs/ResourcesTab";
+import SimulatorTab from "../tabs/SimulatorTab";
 
-const TABS = ['Graph', 'Roles', 'Permissions', 'Resources', 'Simulator']
+const TABS = ["Graph", "Roles", "Permissions", "Resources", "Simulator"];
 
 export default function WorkspacePage() {
-  const { slug } = useParams()
-  const navigate = useNavigate()
-  const [project, setProject] = useState(null)
-  const [activeTab, setActiveTab] = useState('Graph')
-  const [error, setError] = useState('')
+  const { slug } = useParams();
+  const navigate = useNavigate();
+  const [project, setProject] = useState(null);
+  const [activeTab, setActiveTab] = useState("Graph");
+  const [error, setError] = useState("");
 
   useEffect(() => {
     getProject(slug)
       .then(setProject)
-      .catch(() => setError('Project not found'))
-  }, [slug])
+      .catch(() => setError("Project not found"));
+  }, [slug]);
 
-  if (error) return (
-    <div className="flex items-center justify-center min-h-screen">
-      <div className="text-center space-y-4">
-        <p className="text-red-400">{error}</p>
-        <button onClick={() => navigate('/')} className="text-blue-400 hover:underline">Go home</button>
+  if (error)
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center space-y-4">
+          <p className="text-red-400">{error}</p>
+          <button
+            onClick={() => navigate("/")}
+            className="text-blue-400 hover:underline"
+          >
+            Go home
+          </button>
+        </div>
       </div>
-    </div>
-  )
+    );
 
-  if (!project) return <div className="flex items-center justify-center min-h-screen text-gray-500">Loading...</div>
+  if (!project)
+    return (
+      <div className="flex items-center justify-center min-h-screen text-gray-500">
+        Loading...
+      </div>
+    );
 
   return (
     <div className="flex flex-col h-screen">
       <header className="flex items-center gap-6 px-6 py-3 bg-gray-900 border-b border-gray-800">
-        <button onClick={() => navigate('/')} className="text-gray-400 hover:text-white text-sm">← Home</button>
+        <button
+          onClick={() => navigate("/")}
+          className="text-gray-400 hover:text-white text-sm"
+        >
+          ← Home
+        </button>
         <h1 className="text-white font-semibold">{project.name}</h1>
         <span className="text-gray-500 text-sm font-mono">{slug}</span>
         <nav className="ml-auto flex gap-1">
-          {TABS.map(tab => (
+          {TABS.map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
               className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-colors ${
                 activeTab === tab
-                  ? 'bg-blue-600 text-white'
-                  : 'text-gray-400 hover:text-white hover:bg-gray-800'
+                  ? "bg-blue-600 text-white"
+                  : "text-gray-400 hover:text-white hover:bg-gray-800"
               }`}
             >
               {tab}
@@ -1997,14 +2080,14 @@ export default function WorkspacePage() {
         </nav>
       </header>
       <main className="flex-1 overflow-hidden">
-        {activeTab === 'Graph' && <GraphTab slug={slug} />}
-        {activeTab === 'Roles' && <RolesTab slug={slug} />}
-        {activeTab === 'Permissions' && <PermissionsTab slug={slug} />}
-        {activeTab === 'Resources' && <ResourcesTab slug={slug} />}
-        {activeTab === 'Simulator' && <SimulatorTab slug={slug} />}
+        {activeTab === "Graph" && <GraphTab slug={slug} />}
+        {activeTab === "Roles" && <RolesTab slug={slug} />}
+        {activeTab === "Permissions" && <PermissionsTab slug={slug} />}
+        {activeTab === "Resources" && <ResourcesTab slug={slug} />}
+        {activeTab === "Simulator" && <SimulatorTab slug={slug} />}
       </main>
     </div>
-  )
+  );
 }
 ```
 
@@ -2028,6 +2111,7 @@ git commit -m "feat: add home page and workspace tab shell"
 ## Task 12: Roles, Permissions, Resources tabs
 
 **Files:**
+
 - Create: `frontend/src/tabs/RolesTab.jsx`
 - Create: `frontend/src/tabs/PermissionsTab.jsx`
 - Create: `frontend/src/tabs/ResourcesTab.jsx`
@@ -2037,24 +2121,24 @@ git commit -m "feat: add home page and workspace tab shell"
 
 ```jsx
 // frontend/src/tabs/RolesTab.test.jsx
-import { render, screen, waitFor } from '@testing-library/react'
-import { vi } from 'vitest'
-import RolesTab from './RolesTab'
-import * as rolesApi from '../api/roles'
+import { render, screen, waitFor } from "@testing-library/react";
+import { vi } from "vitest";
+import RolesTab from "./RolesTab";
+import * as rolesApi from "../api/roles";
 
-vi.mock('../api/roles')
+vi.mock("../api/roles");
 
-describe('RolesTab', () => {
-  it('renders role list', async () => {
+describe("RolesTab", () => {
+  it("renders role list", async () => {
     rolesApi.listRoles.mockResolvedValue([
-      { id: '1', name: 'admin', description: '', color: '#60a5fa' },
-      { id: '2', name: 'viewer', description: '', color: '#34d399' },
-    ])
-    render(<RolesTab slug="test" />)
-    await waitFor(() => expect(screen.getByText('admin')).toBeInTheDocument())
-    expect(screen.getByText('viewer')).toBeInTheDocument()
-  })
-})
+      { id: "1", name: "admin", description: "", color: "#60a5fa" },
+      { id: "2", name: "viewer", description: "", color: "#34d399" },
+    ]);
+    render(<RolesTab slug="test" />);
+    await waitFor(() => expect(screen.getByText("admin")).toBeInTheDocument());
+    expect(screen.getByText("viewer")).toBeInTheDocument();
+  });
+});
 ```
 
 - [ ] **Step 2: Run test — verify it fails**
@@ -2068,34 +2152,39 @@ Expected: FAIL
 - [ ] **Step 3: Write RolesTab.jsx**
 
 ```jsx
-import { useState, useEffect } from 'react'
-import { listRoles, createRole, deleteRole } from '../api/roles'
+import { useState, useEffect } from "react";
+import { listRoles, createRole, deleteRole } from "../api/roles";
 
 export default function RolesTab({ slug }) {
-  const [roles, setRoles] = useState([])
-  const [name, setName] = useState('')
-  const [color, setColor] = useState('#60a5fa')
-  const [error, setError] = useState('')
+  const [roles, setRoles] = useState([]);
+  const [name, setName] = useState("");
+  const [color, setColor] = useState("#60a5fa");
+  const [error, setError] = useState("");
 
-  const load = () => listRoles(slug).then(setRoles).catch(() => setError('Failed to load roles'))
+  const load = () =>
+    listRoles(slug)
+      .then(setRoles)
+      .catch(() => setError("Failed to load roles"));
 
-  useEffect(() => { load() }, [slug])
+  useEffect(() => {
+    load();
+  }, [slug]);
 
   const handleCreate = async (e) => {
-    e.preventDefault()
+    e.preventDefault();
     try {
-      await createRole(slug, { name, color })
-      setName('')
-      load()
+      await createRole(slug, { name, color });
+      setName("");
+      load();
     } catch (err) {
-      setError(err.response?.data?.detail || 'Failed to create role')
+      setError(err.response?.data?.detail || "Failed to create role");
     }
-  }
+  };
 
   const handleDelete = async (id) => {
-    await deleteRole(slug, id)
-    load()
-  }
+    await deleteRole(slug, id);
+    load();
+  };
 
   return (
     <div className="p-6 space-y-6">
@@ -2112,9 +2201,19 @@ export default function RolesTab({ slug }) {
         </div>
         <div>
           <label className="block text-sm text-gray-400 mb-1">Color</label>
-          <input type="color" value={color} onChange={(e) => setColor(e.target.value)} className="h-10 w-16 rounded cursor-pointer bg-gray-800 border border-gray-700" />
+          <input
+            type="color"
+            value={color}
+            onChange={(e) => setColor(e.target.value)}
+            className="h-10 w-16 rounded cursor-pointer bg-gray-800 border border-gray-700"
+          />
         </div>
-        <button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg">Add role</button>
+        <button
+          type="submit"
+          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg"
+        >
+          Add role
+        </button>
       </form>
       {error && <p className="text-red-400 text-sm">{error}</p>}
       <table className="w-full text-sm">
@@ -2126,52 +2225,72 @@ export default function RolesTab({ slug }) {
           </tr>
         </thead>
         <tbody>
-          {roles.map(role => (
-            <tr key={role.id} className="border-b border-gray-800 hover:bg-gray-900">
+          {roles.map((role) => (
+            <tr
+              key={role.id}
+              className="border-b border-gray-800 hover:bg-gray-900"
+            >
               <td className="py-2 text-white font-mono">{role.name}</td>
               <td className="py-2">
-                <span className="inline-block w-4 h-4 rounded-full" style={{ backgroundColor: role.color }} />
+                <span
+                  className="inline-block w-4 h-4 rounded-full"
+                  style={{ backgroundColor: role.color }}
+                />
               </td>
               <td className="py-2 text-right">
-                <button onClick={() => handleDelete(role.id)} className="text-red-400 hover:text-red-300 text-xs">Delete</button>
+                <button
+                  onClick={() => handleDelete(role.id)}
+                  className="text-red-400 hover:text-red-300 text-xs"
+                >
+                  Delete
+                </button>
               </td>
             </tr>
           ))}
         </tbody>
       </table>
     </div>
-  )
+  );
 }
 ```
 
 - [ ] **Step 4: Write PermissionsTab.jsx**
 
 ```jsx
-import { useState, useEffect } from 'react'
-import { listPermissions, createPermission, deletePermission, assignPermissionToRole, mapPermissionToResource } from '../api/permissions'
-import { listRoles } from '../api/roles'
-import { listResources } from '../api/resources'
+import { useState, useEffect } from "react";
+import {
+  listPermissions,
+  createPermission,
+  deletePermission,
+  assignPermissionToRole,
+  mapPermissionToResource,
+} from "../api/permissions";
+import { listRoles } from "../api/roles";
+import { listResources } from "../api/resources";
 
 export default function PermissionsTab({ slug }) {
-  const [permissions, setPermissions] = useState([])
-  const [roles, setRoles] = useState([])
-  const [resources, setResources] = useState([])
-  const [name, setName] = useState('')
+  const [permissions, setPermissions] = useState([]);
+  const [roles, setRoles] = useState([]);
+  const [resources, setResources] = useState([]);
+  const [name, setName] = useState("");
 
-  const load = () => Promise.all([
-    listPermissions(slug).then(setPermissions),
-    listRoles(slug).then(setRoles),
-    listResources(slug).then(setResources),
-  ])
+  const load = () =>
+    Promise.all([
+      listPermissions(slug).then(setPermissions),
+      listRoles(slug).then(setRoles),
+      listResources(slug).then(setResources),
+    ]);
 
-  useEffect(() => { load() }, [slug])
+  useEffect(() => {
+    load();
+  }, [slug]);
 
   const handleCreate = async (e) => {
-    e.preventDefault()
-    await createPermission(slug, { name })
-    setName('')
-    load()
-  }
+    e.preventDefault();
+    await createPermission(slug, { name });
+    setName("");
+    load();
+  };
 
   return (
     <div className="p-6 space-y-6">
@@ -2183,7 +2302,12 @@ export default function PermissionsTab({ slug }) {
           onChange={(e) => setName(e.target.value)}
           required
         />
-        <button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg">Add permission</button>
+        <button
+          type="submit"
+          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg"
+        >
+          Add permission
+        </button>
       </form>
       <table className="w-full text-sm">
         <thead>
@@ -2195,69 +2319,94 @@ export default function PermissionsTab({ slug }) {
           </tr>
         </thead>
         <tbody>
-          {permissions.map(perm => (
-            <tr key={perm.id} className="border-b border-gray-800 hover:bg-gray-900">
+          {permissions.map((perm) => (
+            <tr
+              key={perm.id}
+              className="border-b border-gray-800 hover:bg-gray-900"
+            >
               <td className="py-2 text-white font-mono">{perm.name}</td>
               <td className="py-2">
                 <select
                   className="bg-gray-800 border border-gray-700 rounded px-2 py-1 text-white text-xs"
-                  onChange={(e) => e.target.value && assignPermissionToRole(slug, e.target.value, perm.id)}
+                  onChange={(e) =>
+                    e.target.value &&
+                    assignPermissionToRole(slug, e.target.value, perm.id)
+                  }
                   defaultValue=""
                 >
                   <option value="">Assign to role…</option>
-                  {roles.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
+                  {roles.map((r) => (
+                    <option key={r.id} value={r.id}>
+                      {r.name}
+                    </option>
+                  ))}
                 </select>
               </td>
               <td className="py-2">
                 <select
                   className="bg-gray-800 border border-gray-700 rounded px-2 py-1 text-white text-xs"
-                  onChange={(e) => e.target.value && mapPermissionToResource(slug, perm.id, e.target.value)}
+                  onChange={(e) =>
+                    e.target.value &&
+                    mapPermissionToResource(slug, perm.id, e.target.value)
+                  }
                   defaultValue=""
                 >
                   <option value="">Map to endpoint…</option>
-                  {resources.map(r => <option key={r.id} value={r.id}>{r.method} {r.path}</option>)}
+                  {resources.map((r) => (
+                    <option key={r.id} value={r.id}>
+                      {r.method} {r.path}
+                    </option>
+                  ))}
                 </select>
               </td>
               <td className="py-2 text-right">
-                <button onClick={() => deletePermission(slug, perm.id).then(load)} className="text-red-400 hover:text-red-300 text-xs">Delete</button>
+                <button
+                  onClick={() => deletePermission(slug, perm.id).then(load)}
+                  className="text-red-400 hover:text-red-300 text-xs"
+                >
+                  Delete
+                </button>
               </td>
             </tr>
           ))}
         </tbody>
       </table>
     </div>
-  )
+  );
 }
 ```
 
 - [ ] **Step 5: Write OpenAPIImportModal.jsx**
 
 ```jsx
-import { useState } from 'react'
-import { importOpenapi } from '../api/import_'
+import { useState } from "react";
+import { importOpenapi } from "../api/import_";
 
 export default function OpenAPIImportModal({ slug, onClose, onImported }) {
-  const [text, setText] = useState('')
-  const [result, setResult] = useState(null)
-  const [error, setError] = useState('')
+  const [text, setText] = useState("");
+  const [result, setResult] = useState(null);
+  const [error, setError] = useState("");
 
   const handleImport = async () => {
-    setError('')
+    setError("");
     try {
-      const json = JSON.parse(text)
-      const res = await importOpenapi(slug, json)
-      setResult(res)
-      onImported()
+      const json = JSON.parse(text);
+      const res = await importOpenapi(slug, json);
+      setResult(res);
+      onImported();
     } catch (err) {
-      setError(err.message || 'Invalid JSON or import failed')
+      setError(err.message || "Invalid JSON or import failed");
     }
-  }
+  };
 
   return (
     <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
       <div className="bg-gray-900 border border-gray-700 rounded-xl p-6 w-full max-w-lg space-y-4">
         <h2 className="text-white font-semibold">Import from OpenAPI spec</h2>
-        <p className="text-gray-400 text-sm">Paste your OpenAPI 3.x JSON below. All paths and methods will be imported as resources.</p>
+        <p className="text-gray-400 text-sm">
+          Paste your OpenAPI 3.x JSON below. All paths and methods will be
+          imported as resources.
+        </p>
         <textarea
           className="w-full h-48 bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white text-xs font-mono focus:outline-none focus:border-blue-500"
           placeholder='{ "openapi": "3.0.0", "paths": { ... } }'
@@ -2265,45 +2414,77 @@ export default function OpenAPIImportModal({ slug, onClose, onImported }) {
           onChange={(e) => setText(e.target.value)}
         />
         {error && <p className="text-red-400 text-sm">{error}</p>}
-        {result && <p className="text-green-400 text-sm">Created {result.created}, skipped {result.skipped}</p>}
+        {result && (
+          <p className="text-green-400 text-sm">
+            Created {result.created}, skipped {result.skipped}
+          </p>
+        )}
         <div className="flex gap-3 justify-end">
-          <button onClick={onClose} className="text-gray-400 hover:text-white px-4 py-2">Cancel</button>
-          <button onClick={handleImport} className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg">Import</button>
+          <button
+            onClick={onClose}
+            className="text-gray-400 hover:text-white px-4 py-2"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleImport}
+            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg"
+          >
+            Import
+          </button>
         </div>
       </div>
     </div>
-  )
+  );
 }
 ```
 
 - [ ] **Step 6: Write ResourcesTab.jsx**
 
 ```jsx
-import { useState, useEffect } from 'react'
-import { listResources, createResource, deleteResource } from '../api/resources'
-import OpenAPIImportModal from '../components/OpenAPIImportModal'
+import { useState, useEffect } from "react";
+import {
+  listResources,
+  createResource,
+  deleteResource,
+} from "../api/resources";
+import OpenAPIImportModal from "../components/OpenAPIImportModal";
 
-const METHOD_COLORS = { GET: 'text-green-400', POST: 'text-blue-400', PUT: 'text-yellow-400', PATCH: 'text-orange-400', DELETE: 'text-red-400' }
+const METHOD_COLORS = {
+  GET: "text-green-400",
+  POST: "text-blue-400",
+  PUT: "text-yellow-400",
+  PATCH: "text-orange-400",
+  DELETE: "text-red-400",
+};
 
 export default function ResourcesTab({ slug }) {
-  const [resources, setResources] = useState([])
-  const [method, setMethod] = useState('GET')
-  const [path, setPath] = useState('')
-  const [showImport, setShowImport] = useState(false)
+  const [resources, setResources] = useState([]);
+  const [method, setMethod] = useState("GET");
+  const [path, setPath] = useState("");
+  const [showImport, setShowImport] = useState(false);
 
-  const load = () => listResources(slug).then(setResources)
-  useEffect(() => { load() }, [slug])
+  const load = () => listResources(slug).then(setResources);
+  useEffect(() => {
+    load();
+  }, [slug]);
 
   const handleCreate = async (e) => {
-    e.preventDefault()
-    await createResource(slug, { method, path })
-    setPath('')
-    load()
-  }
+    e.preventDefault();
+    await createResource(slug, { method, path });
+    setPath("");
+    load();
+  };
 
   return (
     <div className="p-6 space-y-6">
-      {showImport && <OpenAPIImportModal slug={slug} onClose={() => setShowImport(false)} onImported={load} />}
+      {showImport && (
+        <OpenAPIImportModal
+          slug={slug}
+          onClose={() => setShowImport(false)}
+          onImported={load}
+        />
+      )}
       <div className="flex gap-3 justify-between items-end">
         <form onSubmit={handleCreate} className="flex gap-3 flex-1">
           <select
@@ -2311,7 +2492,9 @@ export default function ResourcesTab({ slug }) {
             onChange={(e) => setMethod(e.target.value)}
             className="bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white"
           >
-            {['GET', 'POST', 'PUT', 'PATCH', 'DELETE'].map(m => <option key={m}>{m}</option>)}
+            {["GET", "POST", "PUT", "PATCH", "DELETE"].map((m) => (
+              <option key={m}>{m}</option>
+            ))}
           </select>
           <input
             className="flex-1 bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
@@ -2320,9 +2503,19 @@ export default function ResourcesTab({ slug }) {
             onChange={(e) => setPath(e.target.value)}
             required
           />
-          <button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg">Add</button>
+          <button
+            type="submit"
+            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg"
+          >
+            Add
+          </button>
         </form>
-        <button onClick={() => setShowImport(true)} className="bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded-lg text-sm">Import OpenAPI</button>
+        <button
+          onClick={() => setShowImport(true)}
+          className="bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded-lg text-sm"
+        >
+          Import OpenAPI
+        </button>
       </div>
       <table className="w-full text-sm">
         <thead>
@@ -2333,21 +2526,33 @@ export default function ResourcesTab({ slug }) {
           </tr>
         </thead>
         <tbody>
-          {resources.map(res => (
-            <tr key={res.id} className="border-b border-gray-800 hover:bg-gray-900">
+          {resources.map((res) => (
+            <tr
+              key={res.id}
+              className="border-b border-gray-800 hover:bg-gray-900"
+            >
               <td className="py-2">
-                <span className={`font-mono font-bold text-xs ${METHOD_COLORS[res.method] || 'text-gray-400'}`}>{res.method}</span>
+                <span
+                  className={`font-mono font-bold text-xs ${METHOD_COLORS[res.method] || "text-gray-400"}`}
+                >
+                  {res.method}
+                </span>
               </td>
               <td className="py-2 text-white font-mono">{res.path}</td>
               <td className="py-2 text-right">
-                <button onClick={() => deleteResource(slug, res.id).then(load)} className="text-red-400 hover:text-red-300 text-xs">Delete</button>
+                <button
+                  onClick={() => deleteResource(slug, res.id).then(load)}
+                  className="text-red-400 hover:text-red-300 text-xs"
+                >
+                  Delete
+                </button>
               </td>
             </tr>
           ))}
         </tbody>
       </table>
     </div>
-  )
+  );
 }
 ```
 
@@ -2371,33 +2576,43 @@ git commit -m "feat: add Roles, Permissions, Resources tabs with OpenAPI import"
 ## Task 13: Graph tab (Cytoscape.js)
 
 **Files:**
+
 - Create: `frontend/src/tabs/GraphTab.jsx`
 
 - [ ] **Step 1: Write failing test**
 
 ```jsx
 // frontend/src/tabs/GraphTab.test.jsx
-import { render, screen, waitFor } from '@testing-library/react'
-import { vi } from 'vitest'
-import GraphTab from './GraphTab'
-import * as rolesApi from '../api/roles'
-import * as permissionsApi from '../api/permissions'
+import { render, screen, waitFor } from "@testing-library/react";
+import { vi } from "vitest";
+import GraphTab from "./GraphTab";
+import * as rolesApi from "../api/roles";
+import * as permissionsApi from "../api/permissions";
 
-vi.mock('../api/roles')
-vi.mock('../api/permissions')
+vi.mock("../api/roles");
+vi.mock("../api/permissions");
 
 // Cytoscape is a DOM library — mock it for unit tests
-vi.mock('cytoscape', () => ({ default: vi.fn(() => ({ add: vi.fn(), layout: vi.fn(() => ({ run: vi.fn() })), on: vi.fn(), destroy: vi.fn() })) }))
-vi.mock('cytoscape-fcose', () => ({ default: vi.fn() }))
+vi.mock("cytoscape", () => ({
+  default: vi.fn(() => ({
+    add: vi.fn(),
+    layout: vi.fn(() => ({ run: vi.fn() })),
+    on: vi.fn(),
+    destroy: vi.fn(),
+  })),
+}));
+vi.mock("cytoscape-fcose", () => ({ default: vi.fn() }));
 
-describe('GraphTab', () => {
-  it('renders graph container', async () => {
-    rolesApi.listRoles.mockResolvedValue([])
-    permissionsApi.listPermissions.mockResolvedValue([])
-    render(<GraphTab slug="test" />)
-    await waitFor(() => expect(document.getElementById('cy')).toBeInTheDocument())
-  })
-})
+describe("GraphTab", () => {
+  it("renders graph container", async () => {
+    rolesApi.listRoles.mockResolvedValue([]);
+    permissionsApi.listPermissions.mockResolvedValue([]);
+    render(<GraphTab slug="test" />);
+    await waitFor(() =>
+      expect(document.getElementById("cy")).toBeInTheDocument(),
+    );
+  });
+});
 ```
 
 - [ ] **Step 2: Run test — verify it fails**
@@ -2411,113 +2626,140 @@ Expected: FAIL
 - [ ] **Step 3: Write GraphTab.jsx**
 
 ```jsx
-import { useEffect, useRef, useState } from 'react'
-import cytoscape from 'cytoscape'
-import fcose from 'cytoscape-fcose'
-import { listRoles } from '../api/roles'
-import { listPermissions } from '../api/permissions'
+import { useEffect, useRef, useState } from "react";
+import cytoscape from "cytoscape";
+import fcose from "cytoscape-fcose";
+import { listRoles } from "../api/roles";
+import { listPermissions } from "../api/permissions";
 
-cytoscape.use(fcose)
+cytoscape.use(fcose);
 
 export default function GraphTab({ slug }) {
-  const cyRef = useRef(null)
-  const containerRef = useRef(null)
-  const [selected, setSelected] = useState(null)
-  const [showPermissions, setShowPermissions] = useState(false)
+  const cyRef = useRef(null);
+  const containerRef = useRef(null);
+  const [selected, setSelected] = useState(null);
+  const [showPermissions, setShowPermissions] = useState(false);
 
   useEffect(() => {
-    let cy
-    Promise.all([listRoles(slug), listPermissions(slug)]).then(([roles, permissions]) => {
-      const elements = []
+    let cy;
+    Promise.all([listRoles(slug), listPermissions(slug)]).then(
+      ([roles, permissions]) => {
+        const elements = [];
 
-      // Role nodes
-      roles.forEach(role => {
-        elements.push({
-          data: { id: role.id, label: role.name, type: 'role', color: role.color },
-        })
-      })
-
-      // Placeholder: role_inheritance edges come from role detail API
-      // For now render roles only — edges added when backend returns parents
-      roles.forEach(role => {
-        if (role.parents) {
-          role.parents.forEach(parentId => {
-            elements.push({ data: { id: `${parentId}-${role.id}`, source: parentId, target: role.id, type: 'inheritance' } })
-          })
-        }
-      })
-
-      cy = cytoscape({
-        container: containerRef.current,
-        elements,
-        style: [
-          {
-            selector: 'node[type="role"]',
-            style: {
-              label: 'data(label)',
-              'background-color': 'data(color)',
-              color: '#fff',
-              'text-valign': 'center',
-              'font-family': 'monospace',
-              'font-size': '12px',
-              width: 60,
-              height: 60,
-              'border-width': 2,
-              'border-color': '#1e293b',
+        // Role nodes
+        roles.forEach((role) => {
+          elements.push({
+            data: {
+              id: role.id,
+              label: role.name,
+              type: "role",
+              color: role.color,
             },
-          },
-          {
-            selector: 'edge[type="inheritance"]',
-            style: {
-              width: 2,
-              'line-color': '#334155',
-              'target-arrow-color': '#334155',
-              'target-arrow-shape': 'triangle',
-              'curve-style': 'bezier',
+          });
+        });
+
+        // Placeholder: role_inheritance edges come from role detail API
+        // For now render roles only — edges added when backend returns parents
+        roles.forEach((role) => {
+          if (role.parents) {
+            role.parents.forEach((parentId) => {
+              elements.push({
+                data: {
+                  id: `${parentId}-${role.id}`,
+                  source: parentId,
+                  target: role.id,
+                  type: "inheritance",
+                },
+              });
+            });
+          }
+        });
+
+        cy = cytoscape({
+          container: containerRef.current,
+          elements,
+          style: [
+            {
+              selector: 'node[type="role"]',
+              style: {
+                label: "data(label)",
+                "background-color": "data(color)",
+                color: "#fff",
+                "text-valign": "center",
+                "font-family": "monospace",
+                "font-size": "12px",
+                width: 60,
+                height: 60,
+                "border-width": 2,
+                "border-color": "#1e293b",
+              },
             },
+            {
+              selector: 'edge[type="inheritance"]',
+              style: {
+                width: 2,
+                "line-color": "#334155",
+                "target-arrow-color": "#334155",
+                "target-arrow-shape": "triangle",
+                "curve-style": "bezier",
+              },
+            },
+            {
+              selector: ":selected",
+              style: { "border-color": "#60a5fa", "border-width": 3 },
+            },
+          ],
+          layout: {
+            name: "fcose",
+            animate: true,
+            randomize: false,
+            nodeRepulsion: 4500,
           },
-          {
-            selector: ':selected',
-            style: { 'border-color': '#60a5fa', 'border-width': 3 },
-          },
-        ],
-        layout: { name: 'fcose', animate: true, randomize: false, nodeRepulsion: 4500 },
-      })
+        });
 
-      cyRef.current = cy
+        cyRef.current = cy;
 
-      cy.on('tap', 'node', (e) => {
-        const node = e.target
-        setSelected({ id: node.id(), label: node.data('label'), type: node.data('type') })
-      })
+        cy.on("tap", "node", (e) => {
+          const node = e.target;
+          setSelected({
+            id: node.id(),
+            label: node.data("label"),
+            type: node.data("type"),
+          });
+        });
 
-      cy.on('tap', (e) => {
-        if (e.target === cy) setSelected(null)
-      })
-    })
+        cy.on("tap", (e) => {
+          if (e.target === cy) setSelected(null);
+        });
+      },
+    );
 
-    return () => { if (cyRef.current) cyRef.current.destroy() }
-  }, [slug])
+    return () => {
+      if (cyRef.current) cyRef.current.destroy();
+    };
+  }, [slug]);
 
   return (
     <div className="relative h-full">
       <div id="cy" ref={containerRef} className="w-full h-full bg-gray-950" />
       <div className="absolute top-4 left-4 flex gap-2">
         <button
-          onClick={() => setShowPermissions(v => !v)}
-          className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${showPermissions ? 'bg-blue-600 text-white' : 'bg-gray-800 text-gray-400 hover:text-white'}`}
+          onClick={() => setShowPermissions((v) => !v)}
+          className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${showPermissions ? "bg-blue-600 text-white" : "bg-gray-800 text-gray-400 hover:text-white"}`}
         >
           Show permissions
         </button>
       </div>
       {selected && (
         <div className="absolute top-4 right-4 bg-gray-900 border border-gray-700 rounded-xl p-4 w-64 space-y-2">
-          <h3 className="text-white font-semibold font-mono">{selected.label}</h3>
+          <h3 className="text-white font-semibold font-mono">
+            {selected.label}
+          </h3>
           <p className="text-gray-400 text-xs capitalize">{selected.type}</p>
         </div>
       )}
     </div>
-  )
+  );
 }
 ```
 
@@ -2541,6 +2783,7 @@ git commit -m "feat: add force-directed role hierarchy graph with Cytoscape.js f
 ## Task 14: Simulator tab + Code export modal
 
 **Files:**
+
 - Create: `frontend/src/tabs/SimulatorTab.jsx`
 - Create: `frontend/src/components/CodeExportModal.jsx`
 - Create: `frontend/src/components/ConflictPanel.jsx`
@@ -2549,37 +2792,51 @@ git commit -m "feat: add force-directed role hierarchy graph with Cytoscape.js f
 
 ```jsx
 // frontend/src/tabs/SimulatorTab.test.jsx
-import { render, screen, waitFor, fireEvent } from '@testing-library/react'
-import { vi } from 'vitest'
-import SimulatorTab from './SimulatorTab'
-import * as rolesApi from '../api/roles'
-import * as simulateApi from '../api/simulate'
-import * as analyzeApi from '../api/analyze'
+import { render, screen, waitFor, fireEvent } from "@testing-library/react";
+import { vi } from "vitest";
+import SimulatorTab from "./SimulatorTab";
+import * as rolesApi from "../api/roles";
+import * as simulateApi from "../api/simulate";
+import * as analyzeApi from "../api/analyze";
 
-vi.mock('../api/roles')
-vi.mock('../api/simulate')
-vi.mock('../api/analyze')
+vi.mock("../api/roles");
+vi.mock("../api/simulate");
+vi.mock("../api/analyze");
 
-describe('SimulatorTab', () => {
-  it('shows allowed and denied resources after selecting a role', async () => {
-    rolesApi.listRoles.mockResolvedValue([{ id: '1', name: 'admin', color: '#60a5fa' }])
-    analyzeApi.analyzeProject.mockResolvedValue({ findings: [] })
+describe("SimulatorTab", () => {
+  it("shows allowed and denied resources after selecting a role", async () => {
+    rolesApi.listRoles.mockResolvedValue([
+      { id: "1", name: "admin", color: "#60a5fa" },
+    ]);
+    analyzeApi.analyzeProject.mockResolvedValue({ findings: [] });
     simulateApi.simulateRole.mockResolvedValue({
-      role_id: '1',
-      role_name: 'admin',
+      role_id: "1",
+      role_name: "admin",
       resources: [
-        { resource_id: 'r1', method: 'GET', path: '/users', allowed: true, granted_by_permission: 'read_users', granted_by_role: 'admin' },
-        { resource_id: 'r2', method: 'DELETE', path: '/users/{id}', allowed: false },
+        {
+          resource_id: "r1",
+          method: "GET",
+          path: "/users",
+          allowed: true,
+          granted_by_permission: "read_users",
+          granted_by_role: "admin",
+        },
+        {
+          resource_id: "r2",
+          method: "DELETE",
+          path: "/users/{id}",
+          allowed: false,
+        },
       ],
-    })
-    render(<SimulatorTab slug="test" />)
-    await waitFor(() => screen.getByText('admin'))
-    fireEvent.change(screen.getByRole('combobox'), { target: { value: '1' } })
-    await waitFor(() => expect(screen.getByText('/users')).toBeInTheDocument())
-    expect(screen.getByText('ALLOWED')).toBeInTheDocument()
-    expect(screen.getByText('DENIED')).toBeInTheDocument()
-  })
-})
+    });
+    render(<SimulatorTab slug="test" />);
+    await waitFor(() => screen.getByText("admin"));
+    fireEvent.change(screen.getByRole("combobox"), { target: { value: "1" } });
+    await waitFor(() => expect(screen.getByText("/users")).toBeInTheDocument());
+    expect(screen.getByText("ALLOWED")).toBeInTheDocument();
+    expect(screen.getByText("DENIED")).toBeInTheDocument();
+  });
+});
 ```
 
 - [ ] **Step 2: Run test — verify it fails**
@@ -2594,53 +2851,63 @@ Expected: FAIL
 
 ```jsx
 const TYPE_LABELS = {
-  orphaned_permission: 'Orphaned permission',
-  empty_role: 'Empty role',
-  redundant_assignment: 'Redundant assignment',
-  permission_shadowing: 'Permission shadowing',
-  circular_inheritance: 'Circular inheritance',
-}
+  orphaned_permission: "Orphaned permission",
+  empty_role: "Empty role",
+  redundant_assignment: "Redundant assignment",
+  permission_shadowing: "Permission shadowing",
+  circular_inheritance: "Circular inheritance",
+};
 
 export default function ConflictPanel({ findings }) {
-  if (!findings.length) return (
-    <div className="text-green-400 text-sm py-2">No conflicts detected</div>
-  )
+  if (!findings.length)
+    return (
+      <div className="text-green-400 text-sm py-2">No conflicts detected</div>
+    );
 
   return (
     <div className="space-y-2">
       {findings.map((f, i) => (
-        <div key={i} className="flex items-start gap-3 bg-yellow-950/40 border border-yellow-800/40 rounded-lg px-4 py-3">
+        <div
+          key={i}
+          className="flex items-start gap-3 bg-yellow-950/40 border border-yellow-800/40 rounded-lg px-4 py-3"
+        >
           <span className="text-yellow-400 mt-0.5">⚠</span>
           <div>
-            <p className="text-yellow-300 text-sm font-medium">{TYPE_LABELS[f.type] || f.type}</p>
-            <p className="text-yellow-600 text-xs mt-0.5">{Object.entries(f.detail).map(([k, v]) => `${k}: ${v}`).join(' · ')}</p>
+            <p className="text-yellow-300 text-sm font-medium">
+              {TYPE_LABELS[f.type] || f.type}
+            </p>
+            <p className="text-yellow-600 text-xs mt-0.5">
+              {Object.entries(f.detail)
+                .map(([k, v]) => `${k}: ${v}`)
+                .join(" · ")}
+            </p>
           </div>
         </div>
       ))}
     </div>
-  )
+  );
 }
 ```
 
 - [ ] **Step 4: Write CodeExportModal.jsx**
 
 ```jsx
-import { useState, useEffect } from 'react'
-import { exportFastapi } from '../api/export_'
+import { useState, useEffect } from "react";
+import { exportFastapi } from "../api/export_";
 
 export default function CodeExportModal({ slug, onClose }) {
-  const [code, setCode] = useState('')
-  const [copied, setCopied] = useState(false)
+  const [code, setCode] = useState("");
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
-    exportFastapi(slug).then(setCode)
-  }, [slug])
+    exportFastapi(slug).then(setCode);
+  }, [slug]);
 
   const handleCopy = () => {
-    navigator.clipboard.writeText(code)
-    setCopied(true)
-    setTimeout(() => setCopied(false), 2000)
-  }
+    navigator.clipboard.writeText(code);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
 
   return (
     <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
@@ -2648,67 +2915,91 @@ export default function CodeExportModal({ slug, onClose }) {
         <div className="flex items-center justify-between">
           <h2 className="text-white font-semibold">FastAPI code export</h2>
           <div className="flex gap-2">
-            <button onClick={handleCopy} className="bg-gray-700 hover:bg-gray-600 text-white px-3 py-1.5 rounded-lg text-sm">
-              {copied ? 'Copied!' : 'Copy'}
+            <button
+              onClick={handleCopy}
+              className="bg-gray-700 hover:bg-gray-600 text-white px-3 py-1.5 rounded-lg text-sm"
+            >
+              {copied ? "Copied!" : "Copy"}
             </button>
-            <button onClick={onClose} className="text-gray-400 hover:text-white px-3 py-1.5">Close</button>
+            <button
+              onClick={onClose}
+              className="text-gray-400 hover:text-white px-3 py-1.5"
+            >
+              Close
+            </button>
           </div>
         </div>
-        <pre className="bg-gray-950 border border-gray-800 rounded-lg p-4 text-xs text-gray-300 font-mono overflow-auto max-h-96 whitespace-pre-wrap">{code}</pre>
+        <pre className="bg-gray-950 border border-gray-800 rounded-lg p-4 text-xs text-gray-300 font-mono overflow-auto max-h-96 whitespace-pre-wrap">
+          {code}
+        </pre>
       </div>
     </div>
-  )
+  );
 }
 ```
 
 - [ ] **Step 5: Write SimulatorTab.jsx**
 
 ```jsx
-import { useState, useEffect } from 'react'
-import { listRoles } from '../api/roles'
-import { simulateRole } from '../api/simulate'
-import { analyzeProject } from '../api/analyze'
-import ConflictPanel from '../components/ConflictPanel'
-import CodeExportModal from '../components/CodeExportModal'
+import { useState, useEffect } from "react";
+import { listRoles } from "../api/roles";
+import { simulateRole } from "../api/simulate";
+import { analyzeProject } from "../api/analyze";
+import ConflictPanel from "../components/ConflictPanel";
+import CodeExportModal from "../components/CodeExportModal";
 
-const METHOD_COLORS = { GET: 'text-green-400', POST: 'text-blue-400', PUT: 'text-yellow-400', PATCH: 'text-orange-400', DELETE: 'text-red-400' }
+const METHOD_COLORS = {
+  GET: "text-green-400",
+  POST: "text-blue-400",
+  PUT: "text-yellow-400",
+  PATCH: "text-orange-400",
+  DELETE: "text-red-400",
+};
 
 export default function SimulatorTab({ slug }) {
-  const [roles, setRoles] = useState([])
-  const [selectedRoleId, setSelectedRoleId] = useState('')
-  const [simulation, setSimulation] = useState(null)
-  const [findings, setFindings] = useState([])
-  const [showExport, setShowExport] = useState(false)
+  const [roles, setRoles] = useState([]);
+  const [selectedRoleId, setSelectedRoleId] = useState("");
+  const [simulation, setSimulation] = useState(null);
+  const [findings, setFindings] = useState([]);
+  const [showExport, setShowExport] = useState(false);
 
   useEffect(() => {
-    listRoles(slug).then(setRoles)
-    analyzeProject(slug).then(r => setFindings(r.findings))
-  }, [slug])
+    listRoles(slug).then(setRoles);
+    analyzeProject(slug).then((r) => setFindings(r.findings));
+  }, [slug]);
 
   const handleRoleChange = async (e) => {
-    const roleId = e.target.value
-    setSelectedRoleId(roleId)
+    const roleId = e.target.value;
+    setSelectedRoleId(roleId);
     if (roleId) {
-      const result = await simulateRole(slug, roleId)
-      setSimulation(result)
+      const result = await simulateRole(slug, roleId);
+      setSimulation(result);
     } else {
-      setSimulation(null)
+      setSimulation(null);
     }
-  }
+  };
 
   return (
     <div className="p-6 space-y-6 overflow-auto h-full">
-      {showExport && <CodeExportModal slug={slug} onClose={() => setShowExport(false)} />}
+      {showExport && (
+        <CodeExportModal slug={slug} onClose={() => setShowExport(false)} />
+      )}
       <div className="flex gap-4 items-center">
         <div className="flex-1">
-          <label className="block text-sm text-gray-400 mb-1">Simulate access as role</label>
+          <label className="block text-sm text-gray-400 mb-1">
+            Simulate access as role
+          </label>
           <select
             value={selectedRoleId}
             onChange={handleRoleChange}
             className="bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white w-full"
           >
             <option value="">Select a role…</option>
-            {roles.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
+            {roles.map((r) => (
+              <option key={r.id} value={r.id}>
+                {r.name}
+              </option>
+            ))}
           </select>
         </div>
         <button
@@ -2730,19 +3021,34 @@ export default function SimulatorTab({ slug }) {
             </tr>
           </thead>
           <tbody>
-            {simulation.resources.map(res => (
-              <tr key={res.resource_id} className="border-b border-gray-800 hover:bg-gray-900">
+            {simulation.resources.map((res) => (
+              <tr
+                key={res.resource_id}
+                className="border-b border-gray-800 hover:bg-gray-900"
+              >
                 <td className="py-2">
-                  <span className={`font-mono font-bold text-xs ${METHOD_COLORS[res.method] || 'text-gray-400'}`}>{res.method}</span>
+                  <span
+                    className={`font-mono font-bold text-xs ${METHOD_COLORS[res.method] || "text-gray-400"}`}
+                  >
+                    {res.method}
+                  </span>
                 </td>
                 <td className="py-2 text-white font-mono">{res.path}</td>
                 <td className="py-2">
-                  {res.allowed
-                    ? <span className="text-green-400 font-semibold text-xs">ALLOWED</span>
-                    : <span className="text-red-400 font-semibold text-xs">DENIED</span>}
+                  {res.allowed ? (
+                    <span className="text-green-400 font-semibold text-xs">
+                      ALLOWED
+                    </span>
+                  ) : (
+                    <span className="text-red-400 font-semibold text-xs">
+                      DENIED
+                    </span>
+                  )}
                 </td>
                 <td className="py-2 text-gray-500 text-xs">
-                  {res.allowed ? `${res.granted_by_permission} (via ${res.granted_by_role})` : '—'}
+                  {res.allowed
+                    ? `${res.granted_by_permission} (via ${res.granted_by_role})`
+                    : "—"}
                 </td>
               </tr>
             ))}
@@ -2751,11 +3057,13 @@ export default function SimulatorTab({ slug }) {
       )}
 
       <div>
-        <h3 className="text-sm font-medium text-gray-400 mb-3">Conflicts & Anomalies</h3>
+        <h3 className="text-sm font-medium text-gray-400 mb-3">
+          Conflicts & Anomalies
+        </h3>
         <ConflictPanel findings={findings} />
       </div>
     </div>
-  )
+  );
 }
 ```
 
@@ -2787,6 +3095,7 @@ git commit -m "feat: add simulator tab, conflict panel, and FastAPI code export 
 ## Task 15: Alembic migrations + Neon wiring
 
 **Files:**
+
 - Create: `backend/alembic.ini`
 - Create: `backend/alembic/env.py` (generated then modified)
 
@@ -2837,15 +3146,19 @@ else:
 - [ ] **Step 3: Edit alembic.ini — set sqlalchemy.url**
 
 Change line:
+
 ```
 sqlalchemy.url = driver://user:pass@localhost/dbname
 ```
+
 To:
+
 ```
 sqlalchemy.url = %(DATABASE_URL)s
 ```
 
 Then add to `[alembic]` section:
+
 ```
 [alembic]
 ...
@@ -2896,6 +3209,7 @@ git commit -m "feat: add Alembic migrations, wired to Neon Postgres"
 ## Task 16: Deployment
 
 **Files:**
+
 - Create: `backend/render.yaml`
 - Create: `frontend/vercel.json` (already done in Task 9)
 - Modify: `backend/requirements.txt`
@@ -2960,6 +3274,7 @@ git push origin main
 ## Task 17: Policy Diff API (optional — build after core is working)
 
 **Files:**
+
 - Modify: `backend/app/routers/analyze.py`
 - Modify: `backend/app/schemas.py`
 - Create: `backend/tests/test_diff.py`

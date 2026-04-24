@@ -5,8 +5,12 @@ import pytest
 async def rbac(client):
     await client.post("/api/v1/projects", json={"name": "Test"})
     r_admin = await client.post("/api/v1/projects/test/roles", json={"name": "admin"})
-    r_perm = await client.post("/api/v1/projects/test/permissions", json={"name": "read_users"})
-    r_res = await client.post("/api/v1/projects/test/resources", json={"method": "GET", "path": "/users"})
+    r_perm = await client.post(
+        "/api/v1/projects/test/permissions", json={"name": "read_users"}
+    )
+    r_res = await client.post(
+        "/api/v1/projects/test/resources", json={"method": "GET", "path": "/users"}
+    )
     perm_id = r_perm.json()["id"]
     res_id = r_res.json()["id"]
     await client.post(f"/api/v1/projects/test/permissions/{perm_id}/resources/{res_id}")

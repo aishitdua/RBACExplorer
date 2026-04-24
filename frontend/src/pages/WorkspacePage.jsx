@@ -23,25 +23,33 @@ export default function WorkspacePage() {
       .catch(() => setError('Project not found'))
   }, [slug])
 
-  if (error) return (
-    <div className="flex items-center justify-center min-h-screen">
-      <div className="text-center space-y-4">
-        <p className="text-red-400">{error}</p>
-        <button onClick={() => navigate('/')} className="text-blue-400 hover:underline">Go home</button>
+  if (error)
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center space-y-4">
+          <p className="text-red-400">{error}</p>
+          <button onClick={() => navigate('/')} className="text-blue-400 hover:underline">
+            Go home
+          </button>
+        </div>
       </div>
-    </div>
-  )
+    )
 
-  if (!project) return <div className="flex items-center justify-center min-h-screen text-gray-500">Loading...</div>
+  if (!project)
+    return (
+      <div className="flex items-center justify-center min-h-screen text-gray-500">Loading...</div>
+    )
 
   return (
     <div className="flex flex-col h-screen">
       <header className="flex items-center gap-6 px-6 py-3 bg-gray-900 border-b border-gray-800">
-        <button onClick={() => navigate('/')} className="text-gray-400 hover:text-white text-sm">← Home</button>
+        <button onClick={() => navigate('/')} className="text-gray-400 hover:text-white text-sm">
+          ← Home
+        </button>
         <h1 className="text-white font-semibold">{project.name}</h1>
         <span className="text-gray-500 text-sm font-mono">{slug}</span>
         <nav className="ml-auto flex gap-1">
-          {TABS.map(tab => (
+          {TABS.map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}

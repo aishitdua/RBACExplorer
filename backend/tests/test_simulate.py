@@ -3,25 +3,40 @@ import pytest
 
 @pytest.fixture
 async def rbac(client):
-    """Sets up: admin -> editor (inheritance), read_users perm -> GET /users resource, assigned to editor"""
+    """
+    Sets up: admin -> editor (inheritance), read_users perm -> GET /users resource,
+    assigned to editor
+    """
     await client.post("/api/v1/projects", json={"name": "Test"})
     r_admin = await client.post("/api/v1/projects/test/roles", json={"name": "admin"})
     r_editor = await client.post("/api/v1/projects/test/roles", json={"name": "editor"})
     admin_id = r_admin.json()["id"]
     editor_id = r_editor.json()["id"]
     # editor inherits from admin
-    await client.post(f"/api/v1/projects/test/roles/{editor_id}/parents", json={"parent_role_id": admin_id})
+    await client.post(
+        f"/api/v1/projects/test/roles/{editor_id}/parents",
+        json={"parent_role_id": admin_id},
+    )
     # permission
-    r_perm = await client.post("/api/v1/projects/test/permissions", json={"name": "read_users"})
+    r_perm = await client.post(
+        "/api/v1/projects/test/permissions", json={"name": "read_users"}
+    )
     perm_id = r_perm.json()["id"]
     # resource
-    r_res = await client.post("/api/v1/projects/test/resources", json={"method": "GET", "path": "/users"})
+    r_res = await client.post(
+        "/api/v1/projects/test/resources", json={"method": "GET", "path": "/users"}
+    )
     res_id = r_res.json()["id"]
     # map permission -> resource
     await client.post(f"/api/v1/projects/test/permissions/{perm_id}/resources/{res_id}")
     # assign permission to admin role only
     await client.post(f"/api/v1/projects/test/roles/{admin_id}/permissions/{perm_id}")
-    return {"admin_id": admin_id, "editor_id": editor_id, "perm_id": perm_id, "res_id": res_id}
+    return {
+        "admin_id": admin_id,
+        "editor_id": editor_id,
+        "perm_id": perm_id,
+        "res_id": res_id,
+    }
 
 
 async def test_simulate_direct_permission(client, rbac):
