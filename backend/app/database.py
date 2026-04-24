@@ -5,6 +5,7 @@ from sqlalchemy.orm import DeclarativeBase
 
 class Settings(BaseSettings):
     database_url: str
+    cors_origins: str = "*"  # comma-separated list, "*" = wildcard
     model_config = SettingsConfigDict(env_file=".env")
 
 

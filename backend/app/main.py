@@ -3,6 +3,7 @@ import logging
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.database import settings
 from app.routers import (
     analyze,
     export,
@@ -20,13 +21,23 @@ logging.basicConfig(
     format="%(asctime)s %(levelname)s %(name)s %(message)s",
 )
 
+
+def _parse_cors_origins(raw: str) -> list[str]:
+    if raw.strip() == "*":
+        return ["*"]
+    return [o.strip() for o in raw.split(",") if o.strip()]
+
+
+cors_origins = _parse_cors_origins(settings.cors_origins)
+
 app = FastAPI(title="RBACExplorer API", version="1.0.0")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_methods=["*"],
+    allow_origins=cors_origins,
+    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allow_headers=["*"],
+    allow_credentials=len(cors_origins) > 0 and cors_origins != ["*"],
 )
 
 app.include_router(projects.router, prefix="/api/v1")
