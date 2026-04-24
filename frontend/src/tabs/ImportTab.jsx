@@ -168,7 +168,7 @@ roles:
               ) {
                 setLoading(true)
                 try {
-                  await axios.post(`${API_URL}/api/v1/projects/${slug}/clean`)
+                  await axios.post(`${API_URL}/api/v1/projects/${slug}/clean`, { confirm: slug })
                   setMessage({ type: 'success', text: 'Project cleaned successfully.' })
                 } catch (err) {
                   setMessage({ type: 'error', text: 'Failed to clean project.' })

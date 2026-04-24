@@ -134,3 +134,7 @@ class DiffOut(BaseModel):
     lost: list[SimulatedResource]  # resources no longer accessible after change
     unchanged_allowed: int
     unchanged_denied: int
+
+
+class CleanConfirm(BaseModel):
+    confirm: str

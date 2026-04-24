@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_session
 from app.models import Project
-from app.schemas import ProjectCreate, ProjectOut
+from app.schemas import CleanConfirm, ProjectCreate, ProjectOut
 
 router = APIRouter(tags=["projects"])
 
@@ -49,10 +49,17 @@ async def delete_project(slug: str, session: AsyncSession = Depends(get_session)
 
 
 @router.post("/projects/{slug}/clean", status_code=204)
-async def clean_project(slug: str, session: AsyncSession = Depends(get_session)):
+async def clean_project(
+    slug: str,
+    body: CleanConfirm,
+    session: AsyncSession = Depends(get_session),
+):
     from sqlalchemy import delete
 
     from app.models import Permission, Resource, Role
+
+    if body.confirm != slug:
+        raise HTTPException(400, "Confirmation slug does not match")
 
     project = await session.scalar(select(Project).where(Project.slug == slug))
     if not project:
