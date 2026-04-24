@@ -43,3 +43,18 @@ async def test_create_project_duplicate_slug(client):
 async def test_delete_project_not_found(client):
     r = await client.delete("/api/v1/projects/does-not-exist")
     assert r.status_code == 404
+
+
+# --- SEC-007: Field constraint tests ---
+
+
+async def test_create_project_name_too_long(client):
+    r = await client.post("/api/v1/projects", json={"name": "a" * 129})
+    assert r.status_code == 422
+
+
+async def test_create_project_invalid_slug(client):
+    r = await client.post(
+        "/api/v1/projects", json={"name": "App", "slug": "Invalid Slug!"}
+    )
+    assert r.status_code == 422

@@ -89,3 +89,27 @@ async def test_create_role_duplicate_name(client, project):
     await client.post("/api/v1/projects/test/roles", json={"name": "admin"})
     r = await client.post("/api/v1/projects/test/roles", json={"name": "admin"})
     assert r.status_code == 400
+
+
+# --- SEC-007: Field constraint tests ---
+
+
+async def test_create_role_name_too_long(client, project):
+    r = await client.post("/api/v1/projects/test/roles", json={"name": "x" * 129})
+    assert r.status_code == 422
+
+
+async def test_create_role_invalid_color(client, project):
+    r = await client.post(
+        "/api/v1/projects/test/roles", json={"name": "admin", "color": "red"}
+    )
+    assert r.status_code == 422
+
+
+async def test_update_role_invalid_color(client, project):
+    r = await client.post("/api/v1/projects/test/roles", json={"name": "admin"})
+    role_id = r.json()["id"]
+    r = await client.patch(
+        f"/api/v1/projects/test/roles/{role_id}", json={"color": "#ZZZZZZ"}
+    )
+    assert r.status_code == 422

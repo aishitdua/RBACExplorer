@@ -135,3 +135,16 @@ async def test_unmap_resource_cross_project_rejected(client, two_projects):
         f"/api/v1/projects/alpha/permissions/{perm_b}/resources/{res_a}"
     )
     assert r.status_code == 404
+
+
+# --- SEC-007: Field constraint tests ---
+
+
+async def test_create_permission_name_too_long(client, setup):
+    r = await client.post("/api/v1/projects/test/permissions", json={"name": "p" * 129})
+    assert r.status_code == 422
+
+
+async def test_create_permission_empty_name(client, setup):
+    r = await client.post("/api/v1/projects/test/permissions", json={"name": ""})
+    assert r.status_code == 422

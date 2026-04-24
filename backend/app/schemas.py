@@ -5,9 +5,9 @@ from pydantic import BaseModel, Field
 
 
 class ProjectCreate(BaseModel):
-    name: str
-    description: str = ""
-    slug: str | None = None
+    name: str = Field(min_length=1, max_length=128)
+    description: str = Field(default="", max_length=1024)
+    slug: str | None = Field(default=None, max_length=128, pattern=r"^[a-z0-9-]+$")
 
 
 class ProjectOut(BaseModel):
@@ -21,15 +21,15 @@ class ProjectOut(BaseModel):
 
 
 class RoleCreate(BaseModel):
-    name: str
-    description: str = ""
-    color: str = "#60a5fa"
+    name: str = Field(min_length=1, max_length=128)
+    description: str = Field(default="", max_length=1024)
+    color: str = Field(default="#60a5fa", pattern=r"^#[0-9a-fA-F]{6}$")
 
 
 class RoleUpdate(BaseModel):
-    name: str | None = None
-    description: str | None = None
-    color: str | None = None
+    name: str | None = Field(default=None, min_length=1, max_length=128)
+    description: str | None = Field(default=None, max_length=1024)
+    color: str | None = Field(default=None, pattern=r"^#[0-9a-fA-F]{6}$")
 
 
 class RoleOut(BaseModel):
@@ -45,13 +45,13 @@ class RoleOut(BaseModel):
 
 
 class PermissionCreate(BaseModel):
-    name: str
-    description: str = ""
+    name: str = Field(min_length=1, max_length=128)
+    description: str = Field(default="", max_length=1024)
 
 
 class PermissionUpdate(BaseModel):
-    name: str | None = None
-    description: str | None = None
+    name: str | None = Field(default=None, min_length=1, max_length=128)
+    description: str | None = Field(default=None, max_length=1024)
 
 
 class PermissionOut(BaseModel):
@@ -69,7 +69,7 @@ class ResourceCreate(BaseModel):
         max_length=512,
         pattern=r"^/[a-zA-Z0-9/_{}.\-]*$",
     )
-    description: str = ""
+    description: str = Field(default="", max_length=1024)
 
 
 class ResourceUpdate(BaseModel):
@@ -79,7 +79,7 @@ class ResourceUpdate(BaseModel):
         max_length=512,
         pattern=r"^/[a-zA-Z0-9/_{}.\-]*$",
     )
-    description: str | None = None
+    description: str | None = Field(default=None, max_length=1024)
 
 
 class ResourceOut(BaseModel):
