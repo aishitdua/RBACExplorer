@@ -2,6 +2,7 @@ import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
+from app.auth import get_current_user
 from app.database import Base, get_session
 from app.main import app
 
@@ -28,6 +29,7 @@ async def client(test_engine):
             yield session
 
     app.dependency_overrides[get_session] = override
+    app.dependency_overrides[get_current_user] = lambda: "test-user-id"
     async with AsyncClient(
         transport=ASGITransport(app=app), base_url="http://test"
     ) as c:

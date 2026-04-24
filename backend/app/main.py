@@ -1,10 +1,11 @@
 import logging
 
-from fastapi import FastAPI
+from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 
+from app.auth import get_current_user
 from app.database import settings
 from app.routers import (
     analyze,
@@ -55,14 +56,16 @@ app.add_middleware(
     allow_credentials=len(cors_origins) > 0 and cors_origins != ["*"],
 )
 
-app.include_router(projects.router, prefix="/api/v1")
-app.include_router(roles.router, prefix="/api/v1")
-app.include_router(permissions.router, prefix="/api/v1")
-app.include_router(resources.router, prefix="/api/v1")
-app.include_router(simulate.router, prefix="/api/v1")
-app.include_router(analyze.router, prefix="/api/v1")
-app.include_router(export.router, prefix="/api/v1")
-app.include_router(import_.router, prefix="/api/v1")
+auth_dep = [Depends(get_current_user)]
+
+app.include_router(projects.router, prefix="/api/v1", dependencies=auth_dep)
+app.include_router(roles.router, prefix="/api/v1", dependencies=auth_dep)
+app.include_router(permissions.router, prefix="/api/v1", dependencies=auth_dep)
+app.include_router(resources.router, prefix="/api/v1", dependencies=auth_dep)
+app.include_router(simulate.router, prefix="/api/v1", dependencies=auth_dep)
+app.include_router(analyze.router, prefix="/api/v1", dependencies=auth_dep)
+app.include_router(export.router, prefix="/api/v1", dependencies=auth_dep)
+app.include_router(import_.router, prefix="/api/v1", dependencies=auth_dep)
 
 
 @app.get("/health")
