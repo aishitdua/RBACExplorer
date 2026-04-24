@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, text
+from sqlalchemy.exc import IntegrityError
 from app.database import get_session
 from app.models import Project, Role, RoleInheritance
 from app.schemas import RoleCreate, RoleUpdate, RoleOut, AddParentBody
@@ -56,14 +57,13 @@ async def list_roles(slug: str, session: AsyncSession = Depends(get_session)):
 @router.post("/projects/{slug}/roles", response_model=RoleOut, status_code=201)
 async def create_role(slug: str, body: RoleCreate, session: AsyncSession = Depends(get_session)):
     project = await get_project_or_404(slug, session)
-    existing = await session.scalar(
-        select(Role).where(Role.project_id == project.id, Role.name == body.name)
-    )
-    if existing:
-        raise HTTPException(400, "Role name already exists in this project")
     role = Role(project_id=project.id, name=body.name, description=body.description, color=body.color)
     session.add(role)
-    await session.commit()
+    try:
+        await session.commit()
+    except IntegrityError:
+        await session.rollback()
+        raise HTTPException(400, "Role name already exists in this project")
     await session.refresh(role)
     return role
 
@@ -80,7 +80,11 @@ async def update_role(
         role.description = body.description
     if body.color is not None:
         role.color = body.color
-    await session.commit()
+    try:
+        await session.commit()
+    except IntegrityError:
+        await session.rollback()
+        raise HTTPException(400, "Role name already exists in this project")
     await session.refresh(role)
     return role
 
