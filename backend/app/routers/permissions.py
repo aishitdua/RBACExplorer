@@ -1,3 +1,5 @@
+import logging
+
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
@@ -13,6 +15,8 @@ from app.models import (
     RolePermission,
 )
 from app.schemas import PermissionCreate, PermissionOut, PermissionUpdate
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(tags=["permissions"])
 
@@ -87,6 +91,7 @@ async def create_permission(
             400, "Permission name already exists in this project"
         ) from None
     await session.refresh(perm)
+    logger.info("permission.created project=%s name=%s id=%s", slug, perm.name, perm.id)
     return perm
 
 
@@ -115,6 +120,7 @@ async def update_permission(
             400, "Permission name already exists in this project"
         ) from None
     await session.refresh(perm)
+    logger.info("permission.updated project=%s name=%s id=%s", slug, perm.name, perm.id)
     return perm
 
 
@@ -132,6 +138,7 @@ async def delete_permission(
         raise HTTPException(404, "Permission not found")
     await session.delete(perm)
     await session.commit()
+    logger.info("permission.deleted project=%s perm_id=%s", slug, perm_id)
 
 
 @router.post("/projects/{slug}/roles/{role_id}/permissions/{perm_id}")
@@ -149,6 +156,9 @@ async def assign_permission(
     if not existing:
         session.add(RolePermission(role_id=role_id, permission_id=perm_id))
         await session.commit()
+        logger.info(
+            "permission.assigned project=%s role=%s perm=%s", slug, role_id, perm_id
+        )
     return {"ok": True}
 
 
@@ -169,6 +179,9 @@ async def unassign_permission(
     if link:
         await session.delete(link)
         await session.commit()
+        logger.info(
+            "permission.unassigned project=%s role=%s perm=%s", slug, role_id, perm_id
+        )
 
 
 @router.post("/projects/{slug}/permissions/{perm_id}/resources/{res_id}")
@@ -187,6 +200,12 @@ async def map_resource(
     if not existing:
         session.add(PermissionResource(permission_id=perm_id, resource_id=res_id))
         await session.commit()
+        logger.info(
+            "permission.resource_mapped project=%s perm=%s resource=%s",
+            slug,
+            perm_id,
+            res_id,
+        )
     return {"ok": True}
 
 
@@ -208,3 +227,9 @@ async def unmap_resource(
     if link:
         await session.delete(link)
         await session.commit()
+        logger.info(
+            "permission.resource_unmapped project=%s perm=%s resource=%s",
+            slug,
+            perm_id,
+            res_id,
+        )

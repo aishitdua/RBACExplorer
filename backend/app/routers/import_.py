@@ -93,6 +93,9 @@ async def import_openapi(
                 created += 1
 
     await session.commit()
+    logger.info(
+        "import.openapi project=%s created=%d skipped=%d", slug, created, skipped
+    )
     return {"created": created, "skipped": skipped}
 
 
@@ -146,6 +149,7 @@ async def import_csv(
             created += 1
 
     await session.commit()
+    logger.info("import.csv project=%s created=%d skipped=%d", slug, created, skipped)
     return {"created": created, "skipped": skipped, "processed": count}
 
 
@@ -372,6 +376,7 @@ async def import_yaml(
                         )
 
         await session.commit()
+        logger.info("import.yaml project=%s roles=%d", slug, len(role_map))
         return {"status": "success", "count": len(role_map)}
     except HTTPException:
         raise

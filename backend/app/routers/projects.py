@@ -1,3 +1,5 @@
+import logging
+
 from fastapi import APIRouter, Depends, HTTPException
 from slugify import slugify
 from sqlalchemy import select
@@ -6,6 +8,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.database import get_session
 from app.models import Project
 from app.schemas import CleanConfirm, ProjectCreate, ProjectOut
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(tags=["projects"])
 
@@ -22,6 +26,7 @@ async def create_project(
     session.add(project)
     await session.commit()
     await session.refresh(project)
+    logger.info("project.created slug=%s name=%s", project.slug, project.name)
     return project
 
 
@@ -46,6 +51,7 @@ async def delete_project(slug: str, session: AsyncSession = Depends(get_session)
         raise HTTPException(404, "Project not found")
     await session.delete(project)
     await session.commit()
+    logger.info("project.deleted slug=%s", slug)
 
 
 @router.post("/projects/{slug}/clean", status_code=204)
@@ -71,3 +77,4 @@ async def clean_project(
     await session.execute(delete(Resource).where(Resource.project_id == project.id))
 
     await session.commit()
+    logger.warning("project.cleaned slug=%s", slug)

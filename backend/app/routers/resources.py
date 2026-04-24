@@ -1,3 +1,5 @@
+import logging
+
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
@@ -6,6 +8,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.database import get_session
 from app.models import Project, Resource
 from app.schemas import ResourceCreate, ResourceOut, ResourceUpdate
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(tags=["resources"])
 
@@ -44,6 +48,13 @@ async def create_resource(
         await session.rollback()
         raise HTTPException(400, "Resource already exists in this project") from None
     await session.refresh(res)
+    logger.info(
+        "resource.created project=%s method=%s path=%s id=%s",
+        slug,
+        res.method,
+        res.path,
+        res.id,
+    )
     return res
 
 
@@ -83,3 +94,4 @@ async def delete_resource(
         raise HTTPException(404, "Resource not found")
     await session.delete(res)
     await session.commit()
+    logger.info("resource.deleted project=%s resource_id=%s", slug, res_id)

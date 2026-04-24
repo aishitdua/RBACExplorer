@@ -1,3 +1,5 @@
+import logging
+
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select, text
 from sqlalchemy.exc import IntegrityError
@@ -6,6 +8,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.database import get_session
 from app.models import Project, Role, RoleInheritance, RolePermission
 from app.schemas import AddParentBody, RoleCreate, RoleOut, RoleUpdate
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(tags=["roles"])
 
@@ -109,6 +113,7 @@ async def create_role(
         await session.rollback()
         raise HTTPException(400, "Role name already exists in this project") from None
     await session.refresh(role)
+    logger.info("role.created project=%s role=%s id=%s", slug, role.name, role.id)
     return role
 
 
@@ -133,6 +138,7 @@ async def update_role(
         await session.rollback()
         raise HTTPException(400, "Role name already exists in this project") from None
     await session.refresh(role)
+    logger.info("role.updated project=%s role=%s id=%s", slug, role.name, role.id)
     return role
 
 
@@ -144,6 +150,7 @@ async def delete_role(
     role = await get_role_or_404(role_id, project.id, session)
     await session.delete(role)
     await session.commit()
+    logger.info("role.deleted project=%s role_id=%s", slug, role_id)
 
 
 @router.post("/projects/{slug}/roles/{role_id}/parents", response_model=RoleOut)
@@ -181,6 +188,12 @@ async def add_parent(
     )
     session.add(inheritance)
     await session.commit()
+    logger.info(
+        "role.parent_added project=%s child=%s parent=%s",
+        slug,
+        role_id,
+        body.parent_role_id,
+    )
     return child_role
 
 
@@ -205,3 +218,6 @@ async def remove_parent(
         raise HTTPException(404, "Parent relationship not found")
     await session.delete(link)
     await session.commit()
+    logger.info(
+        "role.parent_removed project=%s child=%s parent=%s", slug, role_id, parent_id
+    )
