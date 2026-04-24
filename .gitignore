@@ -43,3 +43,4 @@ build/
 # --- MUST NOT IGNORE ---
 # Ensure alembic logic is in git
 !backend/alembic/env.py
+*.db
