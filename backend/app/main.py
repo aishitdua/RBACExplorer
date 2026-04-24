@@ -34,14 +34,6 @@ cors_origins = _parse_cors_origins(settings.cors_origins)
 
 app = FastAPI(title="RBACExplorer API", version="1.0.0")
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=cors_origins,
-    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    allow_headers=["*"],
-    allow_credentials=len(cors_origins) > 0 and cors_origins != ["*"],
-)
-
 
 class SecurityHeadersMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
@@ -54,6 +46,14 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
 
 
 app.add_middleware(SecurityHeadersMiddleware)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=cors_origins,
+    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allow_headers=["*"],
+    allow_credentials=len(cors_origins) > 0 and cors_origins != ["*"],
+)
 
 app.include_router(projects.router, prefix="/api/v1")
 app.include_router(roles.router, prefix="/api/v1")
