@@ -68,8 +68,12 @@ async def export_fastapi(slug: str, session: AsyncSession = Depends(get_session)
         # injection in the generated Python code
         safe_perm = row.permission_name.replace('"', '\\"')
 
+        # Escape backslashes first, then double quotes in path to prevent
+        # code injection in the generated Python decorator string (SEC-003)
+        safe_decorator_path = row.path.replace("\\", "\\\\").replace('"', '\\"')
+
         lines += [
-            f'@router.{method}("{row.path}")',
+            f'@router.{method}("{safe_decorator_path}")',
             f'async def {func_name}(_=Depends(require_permission("{safe_perm}"))):\n'
             "    ...",
             "",

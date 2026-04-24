@@ -1,6 +1,7 @@
 from datetime import datetime
+from typing import Literal
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class ProjectCreate(BaseModel):
@@ -63,14 +64,21 @@ class PermissionOut(BaseModel):
 
 
 class ResourceCreate(BaseModel):
-    method: str
-    path: str
+    method: Literal["GET", "POST", "PUT", "PATCH", "DELETE"]
+    path: str = Field(
+        max_length=512,
+        pattern=r"^/[a-zA-Z0-9/_{}.\-]*$",
+    )
     description: str = ""
 
 
 class ResourceUpdate(BaseModel):
-    method: str | None = None
-    path: str | None = None
+    method: Literal["GET", "POST", "PUT", "PATCH", "DELETE"] | None = None
+    path: str | None = Field(
+        default=None,
+        max_length=512,
+        pattern=r"^/[a-zA-Z0-9/_{}.\-]*$",
+    )
     description: str | None = None
 
 
