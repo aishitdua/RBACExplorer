@@ -25,12 +25,37 @@ router = APIRouter(tags=["import"])
 SUPPORTED_METHODS = {"get", "post", "put", "patch", "delete"}
 MAX_FILE_SIZE = 2 * 1024 * 1024  # 2MB limit
 
+ALLOWED_CSV_TYPES = {"text/csv", "application/csv", "text/plain"}
+ALLOWED_YAML_TYPES = {
+    "text/yaml",
+    "application/yaml",
+    "application/x-yaml",
+    "text/plain",
+    "text/x-yaml",
+}
 
-async def validate_file_size(file: UploadFile):
-    if file.size and file.size > MAX_FILE_SIZE:
-        raise HTTPException(
-            413, f"File too large. Maximum size is {MAX_FILE_SIZE / 1024 / 1024}MB"
-        )
+
+CHUNK_SIZE = 64 * 1024  # 64KB read chunks
+
+
+async def read_upload_with_limit(file: UploadFile, allowed_types: set[str]) -> bytes:
+    if (
+        file.content_type
+        and file.content_type.split(";")[0].strip() not in allowed_types
+    ):
+        raise HTTPException(415, f"Unsupported file type: {file.content_type}")
+    data = b""
+    while True:
+        chunk = await file.read(CHUNK_SIZE)
+        if not chunk:
+            break
+        data += chunk
+        if len(data) > MAX_FILE_SIZE:
+            raise HTTPException(
+                413,
+                f"File too large. Maximum size is {MAX_FILE_SIZE // 1024 // 1024}MB",
+            )
+    return data
 
 
 @router.post("/projects/{slug}/import/openapi")
@@ -77,12 +102,11 @@ async def import_csv(
     file: UploadFile = File(...),
     session: AsyncSession = Depends(get_session),
 ):
-    await validate_file_size(file)
+    content = await read_upload_with_limit(file, ALLOWED_CSV_TYPES)
     project = await session.scalar(select(Project).where(Project.slug == slug))
     if not project:
         raise HTTPException(404, "Project not found")
 
-    content = await file.read()
     string_content = content.decode("utf-8")
     reader = csv.DictReader(io.StringIO(string_content))
 
@@ -131,13 +155,12 @@ async def import_yaml(
     file: UploadFile = File(...),
     session: AsyncSession = Depends(get_session),
 ):
-    await validate_file_size(file)
     project = await session.scalar(select(Project).where(Project.slug == slug))
     if not project:
         raise HTTPException(404, "Project not found")
 
     try:
-        content = await file.read()
+        content = await read_upload_with_limit(file, ALLOWED_YAML_TYPES)
         data = yaml.safe_load(content)
         if not isinstance(data, dict):
             raise ValueError("YAML root must be a dictionary of roles")
@@ -350,6 +373,8 @@ async def import_yaml(
 
         await session.commit()
         return {"status": "success", "count": len(role_map)}
+    except HTTPException:
+        raise
     except Exception:
         await session.rollback()
         logger.exception("YAML import failed for project %s", slug)
