@@ -22,6 +22,12 @@ async def create_project(body: ProjectCreate, session: AsyncSession = Depends(ge
     return project
 
 
+@router.get("/projects", response_model=list[ProjectOut])
+async def list_projects(session: AsyncSession = Depends(get_session)):
+    result = await session.execute(select(Project).order_by(Project.created_at.desc()))
+    return result.scalars().all()
+
+
 @router.get("/projects/{slug}", response_model=ProjectOut)
 async def get_project(slug: str, session: AsyncSession = Depends(get_session)):
     project = await session.scalar(select(Project).where(Project.slug == slug))
@@ -36,4 +42,20 @@ async def delete_project(slug: str, session: AsyncSession = Depends(get_session)
     if not project:
         raise HTTPException(404, "Project not found")
     await session.delete(project)
+    await session.commit()
+
+
+@router.post("/projects/{slug}/clean", status_code=204)
+async def clean_project(slug: str, session: AsyncSession = Depends(get_session)):
+    from app.models import Role, Permission, Resource
+    from sqlalchemy import delete
+    project = await session.scalar(select(Project).where(Project.slug == slug))
+    if not project:
+        raise HTTPException(404, "Project not found")
+    
+    # Delete all children
+    await session.execute(delete(Role).where(Role.project_id == project.id))
+    await session.execute(delete(Permission).where(Permission.project_id == project.id))
+    await session.execute(delete(Resource).where(Resource.project_id == project.id))
+    
     await session.commit()

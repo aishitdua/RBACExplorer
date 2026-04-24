@@ -25,7 +25,7 @@ def upgrade() -> None:
         sa.Column('slug', sa.String(128), unique=True, nullable=False),
         sa.Column('name', sa.String(), nullable=False),
         sa.Column('description', sa.String(), nullable=True),
-        sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()')),
+        sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.func.now()),
     )
     op.create_table(
         'roles',
@@ -34,7 +34,7 @@ def upgrade() -> None:
         sa.Column('name', sa.String(), nullable=False),
         sa.Column('description', sa.String(), nullable=True),
         sa.Column('color', sa.String(7), nullable=True),
-        sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()')),
+        sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.func.now()),
         sa.UniqueConstraint('project_id', 'name'),
     )
     op.create_table(

@@ -55,3 +55,53 @@ async def export_fastapi(slug: str, session: AsyncSession = Depends(get_session)
         ]
 
     return "\n".join(lines)
+
+
+@router.get("/projects/{slug}/export/yaml", response_class=PlainTextResponse)
+async def export_yaml(slug: str, session: AsyncSession = Depends(get_session)):
+    import yaml
+    from sqlalchemy.orm import selectinload
+    from app.models import Role, RolePermission, RoleInheritance
+    
+    project = await session.scalar(select(Project).where(Project.slug == slug))
+    if not project: raise HTTPException(404)
+
+    # Fetch Roles with inheritance and permissions
+    roles = await session.scalars(
+        select(Role)
+        .where(Role.project_id == project.id)
+        .options(
+            selectinload(Role.parent_links).selectinload(RoleInheritance.parent_role),
+            selectinload(Role.permission_links).selectinload(RolePermission.permission)
+        )
+    )
+
+    export_data = {}
+
+    for r in roles:
+        role_config = {}
+        
+        # 1. Parents (Include)
+        parents = [link.parent_role.name for link in r.parent_links if link.parent_role]
+        if parents:
+            role_config["include"] = parents
+            
+        # 2. Group Permissions by Module
+        for link in r.permission_links:
+            perm = link.permission
+            # Only include if there's a dot separator (Module.Action)
+            if "." in perm.name:
+                parts = perm.name.split(".", 1)
+                module = parts[0]
+                action = parts[1]
+                if module not in role_config:
+                    role_config[module] = {}
+                role_config[module][action] = perm.description or ""
+            else:
+                if "other" not in role_config:
+                    role_config["other"] = {}
+                role_config["other"][perm.name] = perm.description or ""
+        
+        export_data[r.name] = role_config
+
+    return yaml.safe_dump(export_data, sort_keys=False, allow_unicode=True)

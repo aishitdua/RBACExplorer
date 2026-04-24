@@ -15,10 +15,24 @@ class Base(DeclarativeBase):
     pass
 
 
-engine = create_async_engine(settings.database_url, echo=False)
-AsyncSessionFactory = async_sessionmaker(engine, expire_on_commit=False)
+_engine = None
+_AsyncSessionFactory = None
+
+
+def get_engine():
+    global _engine
+    if _engine is None:
+        _engine = create_async_engine(settings.database_url, echo=False)
+    return _engine
+
+
+def get_session_factory():
+    global _AsyncSessionFactory
+    if _AsyncSessionFactory is None:
+        _AsyncSessionFactory = async_sessionmaker(get_engine(), expire_on_commit=False)
+    return _AsyncSessionFactory
 
 
 async def get_session() -> AsyncSession:
-    async with AsyncSessionFactory() as session:
+    async with get_session_factory()() as session:
         yield session

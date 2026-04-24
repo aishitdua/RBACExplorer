@@ -1,1 +1,38 @@
+# Dependencies
+node_modules/
+backend/venv/
+.venv/
+env/
+venv/
+
+# Local Databases
+backend/*.db
+backend/*.db-journal
+backend/*.db-shm
+backend/*.db-wal
+
+# Environments & Secret
+.env
+backend/.env
+frontend/.env
+*.local
+
+# Python Caches
+__pycache__/
+*.pyc
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Build & Tool Caches
+dist/
+build/
+.vite/
 .superpowers/
+.gemini/
+.claude/
+.DS_Store
+
+# --- MUST NOT IGNORE ---
+# Ensure alembic logic is in git
+!backend/alembic/env.py

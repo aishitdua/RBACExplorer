@@ -6,8 +6,9 @@ import RolesTab from '../tabs/RolesTab'
 import PermissionsTab from '../tabs/PermissionsTab'
 import ResourcesTab from '../tabs/ResourcesTab'
 import SimulatorTab from '../tabs/SimulatorTab'
+import ImportTab from '../tabs/ImportTab'
 
-const TABS = ['Graph', 'Roles', 'Permissions', 'Resources', 'Simulator']
+const TABS = ['Graph', 'Roles', 'Permissions', 'Resources', 'Simulator', 'Import']
 
 export default function WorkspacePage() {
   const { slug } = useParams()
@@ -61,6 +62,7 @@ export default function WorkspacePage() {
         {activeTab === 'Permissions' && <PermissionsTab slug={slug} />}
         {activeTab === 'Resources' && <ResourcesTab slug={slug} />}
         {activeTab === 'Simulator' && <SimulatorTab slug={slug} />}
+        {activeTab === 'Import' && <ImportTab slug={slug} />}
       </main>
     </div>
   )

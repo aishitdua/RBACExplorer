@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, text
 from sqlalchemy.exc import IntegrityError
 from app.database import get_session
-from app.models import Project, Role, RoleInheritance
+from app.models import Project, Role, RoleInheritance, RolePermission
 from app.schemas import RoleCreate, RoleUpdate, RoleOut, AddParentBody
 
 router = APIRouter(tags=["roles"])
@@ -47,11 +47,39 @@ async def would_create_cycle(child_id: str, parent_id: str, session: AsyncSessio
     return (result or 0) > 0
 
 
-@router.get("/projects/{slug}/roles", response_model=list[RoleOut])
+@router.get("/projects/{slug}/roles", response_model=list[dict])
 async def list_roles(slug: str, session: AsyncSession = Depends(get_session)):
-    project = await get_project_or_404(slug, session)
-    roles = await session.scalars(select(Role).where(Role.project_id == project.id))
-    return list(roles)
+    from sqlalchemy.orm import selectinload
+    project = await session.scalar(select(Project).where(Project.slug == slug))
+    if not project: raise HTTPException(404)
+    
+    roles = await session.scalars(
+        select(Role)
+        .where(Role.project_id == project.id)
+        .options(
+            selectinload(Role.parent_links),
+            selectinload(Role.permission_links).selectinload(RolePermission.permission)
+        )
+    )
+    
+    result = []
+    for r in roles:
+        result.append({
+            "id": r.id,
+            "name": r.name,
+            "color": r.color,
+            "parents": [link.parent_role_id for link in r.parent_links],
+            "permissions": [
+                {
+                    "id": link.permission_id,
+                    "name": link.permission.name,
+                    "module": link.permission.name.split('.')[0] if '.' in link.permission.name else 'other'
+                }
+                for link in r.permission_links
+            ]
+        })
+        
+    return result
 
 
 @router.post("/projects/{slug}/roles", response_model=RoleOut, status_code=201)

@@ -37,6 +37,8 @@ class RoleOut(BaseModel):
     name: str
     description: str
     color: str
+    parents: list[str] = []
+    permissions: list[str] = []
 
     model_config = {"from_attributes": True}
 
