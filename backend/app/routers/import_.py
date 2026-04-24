@@ -1,5 +1,6 @@
 import csv
 import io
+import logging
 
 import yaml
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
@@ -16,6 +17,8 @@ from app.models import (
     RoleInheritance,
     RolePermission,
 )
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(tags=["import"])
 
@@ -347,6 +350,10 @@ async def import_yaml(
 
         await session.commit()
         return {"status": "success", "count": len(role_map)}
-    except Exception as e:
+    except Exception:
         await session.rollback()
-        raise HTTPException(status_code=500, detail=f"Import Error: {str(e)}") from None
+        logger.exception("YAML import failed for project %s", slug)
+        raise HTTPException(
+            status_code=500,
+            detail="Import failed. Check your YAML structure and try again.",
+        ) from None
