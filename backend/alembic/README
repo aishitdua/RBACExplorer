@@ -1,1 +1,26 @@
-Generic single-database configuration.
+# 🗃️ Database Migrations (Alembic)
+
+This folder contains the migration scripts for the RBAC Explorer database.
+
+## 🛠️ Usage
+
+### Apply Migrations
+Updates your local SQLite database to the latest schema:
+```bash
+alembic upgrade head
+```
+
+### Create New Migration
+Run this after making changes to `models.py`:
+```bash
+alembic revision --autogenerate -m "description of changes"
+```
+
+### Rollback
+Undo the last migration change:
+```bash
+alembic downgrade -1
+```
+
+---
+**Note:** Ensure your `DATABASE_URL` is set in the environment or `.env` file before running these commands.

@@ -1,16 +1,24 @@
-# React + Vite
+# 🎨 RBAC Explorer — Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A modern, high-fidelity React dashboard for visualizing and designing RBAC systems.
 
-Currently, two official plugins are available:
+## 🏗️ Architecture
+- **Vite + React**: Core framework.
+- **Cytoscape.js**: Graph engine for Role/Permission visualization.
+- **Tailwind CSS**: Premium, dark-mode-first styling.
+- **Axios**: API communication.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## 🚀 Local Development
+1. **Install Packages**:
+   ```bash
+   npm install
+   ```
+2. **Run Dev Server**:
+   ```bash
+   npm run dev
+   ```
 
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## 📊 Visual Assets
+- `GraphTab.jsx`: Contains the Breadthfirst hierarchical logic and compound node grouping.
+- `SimulatorTab.jsx`: Interactive UI for verifying path-based permissions.
+- `ImportTab.jsx`: The "Nuclear Option" and bulk file processing logic.
