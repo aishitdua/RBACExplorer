@@ -8,6 +8,8 @@ from app.models import (
     Permission,
     PermissionResource,
     Project,
+    Resource,
+    Role,
     RolePermission,
 )
 from app.schemas import PermissionCreate, PermissionOut, PermissionUpdate
@@ -20,6 +22,41 @@ async def _get_project(slug: str, session: AsyncSession) -> Project:
     if not p:
         raise HTTPException(404, "Project not found")
     return p
+
+
+async def _get_role_or_404(
+    role_id: str, project_id: str, session: AsyncSession
+) -> Role:
+    role = await session.scalar(
+        select(Role).where(Role.id == role_id, Role.project_id == project_id)
+    )
+    if not role:
+        raise HTTPException(404, "Role not found")
+    return role
+
+
+async def _get_permission_or_404(
+    perm_id: str, project_id: str, session: AsyncSession
+) -> Permission:
+    perm = await session.scalar(
+        select(Permission).where(
+            Permission.id == perm_id, Permission.project_id == project_id
+        )
+    )
+    if not perm:
+        raise HTTPException(404, "Permission not found")
+    return perm
+
+
+async def _get_resource_or_404(
+    res_id: str, project_id: str, session: AsyncSession
+) -> Resource:
+    resource = await session.scalar(
+        select(Resource).where(Resource.id == res_id, Resource.project_id == project_id)
+    )
+    if not resource:
+        raise HTTPException(404, "Resource not found")
+    return resource
 
 
 @router.get("/projects/{slug}/permissions", response_model=list[PermissionOut])
@@ -101,6 +138,9 @@ async def delete_permission(
 async def assign_permission(
     slug: str, role_id: str, perm_id: str, session: AsyncSession = Depends(get_session)
 ):
+    project = await _get_project(slug, session)
+    await _get_role_or_404(role_id, project.id, session)
+    await _get_permission_or_404(perm_id, project.id, session)
     existing = await session.scalar(
         select(RolePermission).where(
             RolePermission.role_id == role_id, RolePermission.permission_id == perm_id
@@ -118,6 +158,9 @@ async def assign_permission(
 async def unassign_permission(
     slug: str, role_id: str, perm_id: str, session: AsyncSession = Depends(get_session)
 ):
+    project = await _get_project(slug, session)
+    await _get_role_or_404(role_id, project.id, session)
+    await _get_permission_or_404(perm_id, project.id, session)
     link = await session.scalar(
         select(RolePermission).where(
             RolePermission.role_id == role_id, RolePermission.permission_id == perm_id
@@ -132,6 +175,9 @@ async def unassign_permission(
 async def map_resource(
     slug: str, perm_id: str, res_id: str, session: AsyncSession = Depends(get_session)
 ):
+    project = await _get_project(slug, session)
+    await _get_permission_or_404(perm_id, project.id, session)
+    await _get_resource_or_404(res_id, project.id, session)
     existing = await session.scalar(
         select(PermissionResource).where(
             PermissionResource.permission_id == perm_id,
@@ -150,6 +196,9 @@ async def map_resource(
 async def unmap_resource(
     slug: str, perm_id: str, res_id: str, session: AsyncSession = Depends(get_session)
 ):
+    project = await _get_project(slug, session)
+    await _get_permission_or_404(perm_id, project.id, session)
+    await _get_resource_or_404(res_id, project.id, session)
     link = await session.scalar(
         select(PermissionResource).where(
             PermissionResource.permission_id == perm_id,
