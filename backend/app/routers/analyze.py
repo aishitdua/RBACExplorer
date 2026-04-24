@@ -3,7 +3,7 @@ from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_session
-from app.models import Project, Resource
+from app.models import Permission, Project, Resource, Role
 from app.schemas import AnalyzeOut, ConflictFinding, DiffOut, SimulatedResource
 
 router = APIRouter(tags=["analyze"])
@@ -105,6 +105,29 @@ async def diff_role(
     project = await session.scalar(select(Project).where(Project.slug == slug))
     if not project:
         raise HTTPException(404, "Project not found")
+
+    # Validate that role_id belongs to this project
+    role = await session.scalar(
+        select(Role).where(Role.id == role_id, Role.project_id == project.id)
+    )
+    if not role:
+        raise HTTPException(404, "Role not found")
+
+    # Validate add_permissions and remove_permissions IDs belong to this project
+    all_supplied_ids = set(add_permissions) | set(remove_permissions)
+    if all_supplied_ids:
+        valid_perms = await session.scalars(
+            select(Permission.id).where(
+                Permission.id.in_(list(all_supplied_ids)),
+                Permission.project_id == project.id,
+            )
+        )
+        valid_ids = set(valid_perms.all())
+        foreign_ids = all_supplied_ids - valid_ids
+        if foreign_ids:
+            raise HTTPException(
+                400, "One or more permission IDs do not belong to this project"
+            )
 
     async def resolve_allowed_resource_ids(
         extra_perm_ids: set, excluded_perm_ids: set
