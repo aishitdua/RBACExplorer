@@ -33,3 +33,14 @@ async def test_delete_project(client):
     assert r.status_code == 204
     r2 = await client.get("/api/v1/projects/delete-me")
     assert r2.status_code == 404
+
+
+async def test_create_project_duplicate_slug(client):
+    await client.post("/api/v1/projects", json={"name": "My App"})
+    r = await client.post("/api/v1/projects", json={"name": "My App"})
+    assert r.status_code == 400
+
+
+async def test_delete_project_not_found(client):
+    r = await client.delete("/api/v1/projects/does-not-exist")
+    assert r.status_code == 404
