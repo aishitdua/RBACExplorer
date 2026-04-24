@@ -116,3 +116,11 @@ class AssignPermissionBody(BaseModel):
 
 class MapResourceBody(BaseModel):
     pass
+
+
+class DiffOut(BaseModel):
+    role_id: str
+    gained: list[SimulatedResource]   # resources newly accessible after change
+    lost: list[SimulatedResource]     # resources no longer accessible after change
+    unchanged_allowed: int
+    unchanged_denied: int
