@@ -1,7 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import PlainTextResponse
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, text
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.database import get_session
 from app.models import Project
 
@@ -14,14 +15,17 @@ async def export_fastapi(slug: str, session: AsyncSession = Depends(get_session)
     if not project:
         raise HTTPException(404, "Project not found")
 
-    result = await session.execute(text("""
+    result = await session.execute(
+        text("""
         SELECT DISTINCT res.method, res.path, p.name AS permission_name
         FROM resources res
         JOIN permission_resources pr ON pr.resource_id = res.id
         JOIN permissions p ON p.id = pr.permission_id
         WHERE res.project_id = :pid
         ORDER BY res.path, res.method
-    """), {"pid": project.id})
+    """),
+        {"pid": project.id},
+    )
     rows = result.fetchall()
 
     lines = [
@@ -34,7 +38,11 @@ async def export_fastapi(slug: str, session: AsyncSession = Depends(get_session)
         "",
         "def require_permission(permission: str) -> Callable:",
         '    """Replace get_current_user_permissions with your own auth logic."""',
-        "    def dependency(current_permissions: list[str] = Depends(get_current_user_permissions)):",
+        "    def dependency(",
+        "        current_permissions: list[str] = Depends(",
+        "            get_current_user_permissions",
+        "        ),",
+        "    ):",
         "        if permission not in current_permissions:",
         '            raise HTTPException(status_code=403, detail="Forbidden")',
         "    return dependency",
@@ -46,11 +54,28 @@ async def export_fastapi(slug: str, session: AsyncSession = Depends(get_session)
 
     for row in rows:
         method = row.method.lower()
-        safe_path = row.path.strip("/").replace("/", "_").replace("{", "").replace("}", "")
+        # Sanitize path for function name
+        safe_path = (
+            row.path.strip("/")
+            .replace("/", "_")
+            .replace("{", "")
+            .replace("}", "")
+            .replace("-", "_")
+        )
         func_name = f"{method}_{safe_path}" if safe_path else method
+
+        # Escape double quotes in permission name to prevent
+        # injection in the generated Python code
+        safe_perm = row.permission_name.replace('"', '\\"')
+
+        # Escape backslashes first, then double quotes in path to prevent
+        # code injection in the generated Python decorator string (SEC-003)
+        safe_decorator_path = row.path.replace("\\", "\\\\").replace('"', '\\"')
+
         lines += [
-            f'@router.{method}("{row.path}")',
-            f'async def {func_name}(_=Depends(require_permission("{row.permission_name}"))):\n    ...',
+            f'@router.{method}("{safe_decorator_path}")',
+            f'async def {func_name}(_=Depends(require_permission("{safe_perm}"))):\n'
+            "    ...",
             "",
         ]
 
@@ -61,10 +86,12 @@ async def export_fastapi(slug: str, session: AsyncSession = Depends(get_session)
 async def export_yaml(slug: str, session: AsyncSession = Depends(get_session)):
     import yaml
     from sqlalchemy.orm import selectinload
-    from app.models import Role, RolePermission, RoleInheritance
-    
+
+    from app.models import Role, RoleInheritance, RolePermission
+
     project = await session.scalar(select(Project).where(Project.slug == slug))
-    if not project: raise HTTPException(404)
+    if not project:
+        raise HTTPException(404)
 
     # Fetch Roles with inheritance and permissions
     roles = await session.scalars(
@@ -72,7 +99,7 @@ async def export_yaml(slug: str, session: AsyncSession = Depends(get_session)):
         .where(Role.project_id == project.id)
         .options(
             selectinload(Role.parent_links).selectinload(RoleInheritance.parent_role),
-            selectinload(Role.permission_links).selectinload(RolePermission.permission)
+            selectinload(Role.permission_links).selectinload(RolePermission.permission),
         )
     )
 
@@ -80,12 +107,12 @@ async def export_yaml(slug: str, session: AsyncSession = Depends(get_session)):
 
     for r in roles:
         role_config = {}
-        
+
         # 1. Parents (Include)
         parents = [link.parent_role.name for link in r.parent_links if link.parent_role]
         if parents:
             role_config["include"] = parents
-            
+
         # 2. Group Permissions by Module
         for link in r.permission_links:
             perm = link.permission
@@ -101,7 +128,7 @@ async def export_yaml(slug: str, session: AsyncSession = Depends(get_session)):
                 if "other" not in role_config:
                     role_config["other"] = {}
                 role_config["other"][perm.name] = perm.description or ""
-        
+
         export_data[r.name] = role_config
 
     return yaml.safe_dump(export_data, sort_keys=False, allow_unicode=True)

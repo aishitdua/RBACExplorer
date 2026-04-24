@@ -1,12 +1,13 @@
-from pydantic import BaseModel
-from typing import Optional
 from datetime import datetime
+from typing import Literal
+
+from pydantic import BaseModel, Field
 
 
 class ProjectCreate(BaseModel):
-    name: str
-    description: str = ""
-    slug: Optional[str] = None
+    name: str = Field(min_length=1, max_length=128)
+    description: str = Field(default="", max_length=1024)
+    slug: str | None = Field(default=None, max_length=128, pattern=r"^[a-z0-9-]+$")
 
 
 class ProjectOut(BaseModel):
@@ -20,15 +21,15 @@ class ProjectOut(BaseModel):
 
 
 class RoleCreate(BaseModel):
-    name: str
-    description: str = ""
-    color: str = "#60a5fa"
+    name: str = Field(min_length=1, max_length=128)
+    description: str = Field(default="", max_length=1024)
+    color: str = Field(default="#60a5fa", pattern=r"^#[0-9a-fA-F]{6}$")
 
 
 class RoleUpdate(BaseModel):
-    name: Optional[str] = None
-    description: Optional[str] = None
-    color: Optional[str] = None
+    name: str | None = Field(default=None, min_length=1, max_length=128)
+    description: str | None = Field(default=None, max_length=1024)
+    color: str | None = Field(default=None, pattern=r"^#[0-9a-fA-F]{6}$")
 
 
 class RoleOut(BaseModel):
@@ -44,13 +45,13 @@ class RoleOut(BaseModel):
 
 
 class PermissionCreate(BaseModel):
-    name: str
-    description: str = ""
+    name: str = Field(min_length=1, max_length=128)
+    description: str = Field(default="", max_length=1024)
 
 
 class PermissionUpdate(BaseModel):
-    name: Optional[str] = None
-    description: Optional[str] = None
+    name: str | None = Field(default=None, min_length=1, max_length=128)
+    description: str | None = Field(default=None, max_length=1024)
 
 
 class PermissionOut(BaseModel):
@@ -63,15 +64,22 @@ class PermissionOut(BaseModel):
 
 
 class ResourceCreate(BaseModel):
-    method: str
-    path: str
-    description: str = ""
+    method: Literal["GET", "POST", "PUT", "PATCH", "DELETE"]
+    path: str = Field(
+        max_length=512,
+        pattern=r"^/[a-zA-Z0-9/_{}.\-]*$",
+    )
+    description: str = Field(default="", max_length=1024)
 
 
 class ResourceUpdate(BaseModel):
-    method: Optional[str] = None
-    path: Optional[str] = None
-    description: Optional[str] = None
+    method: Literal["GET", "POST", "PUT", "PATCH", "DELETE"] | None = None
+    path: str | None = Field(
+        default=None,
+        max_length=512,
+        pattern=r"^/[a-zA-Z0-9/_{}.\-]*$",
+    )
+    description: str | None = Field(default=None, max_length=1024)
 
 
 class ResourceOut(BaseModel):
@@ -89,8 +97,8 @@ class SimulatedResource(BaseModel):
     method: str
     path: str
     allowed: bool
-    granted_by_permission: Optional[str] = None
-    granted_by_role: Optional[str] = None
+    granted_by_permission: str | None = None
+    granted_by_role: str | None = None
 
 
 class SimulateOut(BaseModel):
@@ -122,7 +130,11 @@ class MapResourceBody(BaseModel):
 
 class DiffOut(BaseModel):
     role_id: str
-    gained: list[SimulatedResource]   # resources newly accessible after change
-    lost: list[SimulatedResource]     # resources no longer accessible after change
+    gained: list[SimulatedResource]  # resources newly accessible after change
+    lost: list[SimulatedResource]  # resources no longer accessible after change
     unchanged_allowed: int
     unchanged_denied: int
+
+
+class CleanConfirm(BaseModel):
+    confirm: str

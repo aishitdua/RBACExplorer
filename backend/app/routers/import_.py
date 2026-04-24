@@ -1,19 +1,67 @@
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
 import csv
-import yaml
 import io
+import logging
+
+import yaml
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.database import get_session
-from app.models import Project, Resource, Permission, Role, RolePermission, RoleInheritance, PermissionResource
+from app.models import (
+    Permission,
+    PermissionResource,
+    Project,
+    Resource,
+    Role,
+    RoleInheritance,
+    RolePermission,
+)
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(tags=["import"])
 
 SUPPORTED_METHODS = {"get", "post", "put", "patch", "delete"}
+MAX_FILE_SIZE = 2 * 1024 * 1024  # 2MB limit
+
+ALLOWED_CSV_TYPES = {"text/csv", "application/csv", "text/plain"}
+ALLOWED_YAML_TYPES = {
+    "text/yaml",
+    "application/yaml",
+    "application/x-yaml",
+    "text/plain",
+    "text/x-yaml",
+}
+
+
+CHUNK_SIZE = 64 * 1024  # 64KB read chunks
+
+
+async def read_upload_with_limit(file: UploadFile, allowed_types: set[str]) -> bytes:
+    if (
+        file.content_type
+        and file.content_type.split(";")[0].strip() not in allowed_types
+    ):
+        raise HTTPException(415, f"Unsupported file type: {file.content_type}")
+    data = b""
+    while True:
+        chunk = await file.read(CHUNK_SIZE)
+        if not chunk:
+            break
+        data += chunk
+        if len(data) > MAX_FILE_SIZE:
+            raise HTTPException(
+                413,
+                f"File too large. Maximum size is {MAX_FILE_SIZE // 1024 // 1024}MB",
+            )
+    return data
 
 
 @router.post("/projects/{slug}/import/openapi")
-async def import_openapi(slug: str, body: dict, session: AsyncSession = Depends(get_session)):
+async def import_openapi(
+    slug: str, body: dict, session: AsyncSession = Depends(get_session)
+):
     project = await session.scalar(select(Project).where(Project.slug == slug))
     if not project:
         raise HTTPException(404, "Project not found")
@@ -21,6 +69,9 @@ async def import_openapi(slug: str, body: dict, session: AsyncSession = Depends(
     paths = body.get("paths", {})
     created = 0
     skipped = 0
+
+    if len(paths) > 500:
+        raise HTTPException(400, "Too many paths in OpenAPI spec (max 500)")
 
     for path, methods in paths.items():
         for method in methods:
@@ -36,27 +87,44 @@ async def import_openapi(slug: str, body: dict, session: AsyncSession = Depends(
             if existing:
                 skipped += 1
             else:
-                session.add(Resource(project_id=project.id, method=method.upper(), path=path))
+                session.add(
+                    Resource(project_id=project.id, method=method.upper(), path=path)
+                )
                 created += 1
 
     await session.commit()
+    logger.info(
+        "import.openapi project=%s created=%d skipped=%d", slug, created, skipped
+    )
     return {"created": created, "skipped": skipped}
 
 
 @router.post("/projects/{slug}/import/csv")
-async def import_csv(slug: str, file: UploadFile = File(...), session: AsyncSession = Depends(get_session)):
+async def import_csv(
+    slug: str,
+    file: UploadFile = File(...),
+    session: AsyncSession = Depends(get_session),
+):
+    content = await read_upload_with_limit(file, ALLOWED_CSV_TYPES)
     project = await session.scalar(select(Project).where(Project.slug == slug))
     if not project:
         raise HTTPException(404, "Project not found")
 
-    content = await file.read()
     string_content = content.decode("utf-8")
     reader = csv.DictReader(io.StringIO(string_content))
 
     created = 0
     skipped = 0
+    count = 0
     for row in reader:
+        count += 1
+        if count > 1000:
+            break
+
         method = row.get("method", "").upper()
+        if method not in {"GET", "POST", "PUT", "PATCH", "DELETE"}:
+            continue
+
         path = row.get("path", "")
         desc = row.get("description", "")
 
@@ -73,21 +141,30 @@ async def import_csv(slug: str, file: UploadFile = File(...), session: AsyncSess
         if existing:
             skipped += 1
         else:
-            session.add(Resource(project_id=project.id, method=method, path=path, description=desc))
+            session.add(
+                Resource(
+                    project_id=project.id, method=method, path=path, description=desc
+                )
+            )
             created += 1
 
     await session.commit()
-    return {"created": created, "skipped": skipped}
+    logger.info("import.csv project=%s created=%d skipped=%d", slug, created, skipped)
+    return {"created": created, "skipped": skipped, "processed": count}
 
 
 @router.post("/projects/{slug}/import/yaml")
-async def import_yaml(slug: str, file: UploadFile = File(...), session: AsyncSession = Depends(get_session)):
+async def import_yaml(
+    slug: str,
+    file: UploadFile = File(...),
+    session: AsyncSession = Depends(get_session),
+):
     project = await session.scalar(select(Project).where(Project.slug == slug))
     if not project:
         raise HTTPException(404, "Project not found")
 
     try:
-        content = await file.read()
+        content = await read_upload_with_limit(file, ALLOWED_YAML_TYPES)
         data = yaml.safe_load(content)
         if not isinstance(data, dict):
             raise ValueError("YAML root must be a dictionary of roles")
@@ -95,33 +172,96 @@ async def import_yaml(slug: str, file: UploadFile = File(...), session: AsyncSes
         # Helper to guess HTTP method
         def guess_method(action: str) -> str:
             a = str(action).lower()
-            if any(w in a for w in ["index", "show", "search", "fetch", "list", "get", "results", "summary", "stats", "preview", "details", "events"]):
+            if any(
+                w in a
+                for w in [
+                    "index",
+                    "show",
+                    "search",
+                    "fetch",
+                    "list",
+                    "get",
+                    "results",
+                    "summary",
+                    "stats",
+                    "preview",
+                    "details",
+                    "events",
+                ]
+            ):
                 return "GET"
-            if any(w in a for w in ["destroy", "delete", "remove", "void", "purge", "block", "inactivate", "deactivate"]):
+            if any(
+                w in a
+                for w in [
+                    "destroy",
+                    "delete",
+                    "remove",
+                    "void",
+                    "purge",
+                    "block",
+                    "inactivate",
+                    "deactivate",
+                ]
+            ):
                 return "DELETE"
-            if any(w in a for w in ["update", "edit", "set", "toggle", "change", "reset", "fix", "mark", "pass", "fail", "approve", "reject", "deny", "escalate", "revoke", "grant", "transfer"]):
+            if any(
+                w in a
+                for w in [
+                    "update",
+                    "edit",
+                    "set",
+                    "toggle",
+                    "change",
+                    "reset",
+                    "fix",
+                    "mark",
+                    "pass",
+                    "fail",
+                    "approve",
+                    "reject",
+                    "deny",
+                    "escalate",
+                    "revoke",
+                    "grant",
+                    "transfer",
+                ]
+            ):
                 return "PUT"
             return "POST"
 
         # Helper to generate a consistent color based on name
         def generate_color(name: str) -> str:
             colors = [
-                "#3b82f6", "#ef4444", "#10b981", "#f59e0b", "#8b5cf6", 
-                "#ec4899", "#06b6d4", "#84cc16", "#6366f1", "#f97316"
+                "#3b82f6",
+                "#ef4444",
+                "#10b981",
+                "#f59e0b",
+                "#8b5cf6",
+                "#ec4899",
+                "#06b6d4",
+                "#84cc16",
+                "#6366f1",
+                "#f97316",
             ]
             # Simple hash to pick a color
             idx = sum(ord(c) for c in name) % len(colors)
             return colors[idx]
 
-        role_map = {} # name -> id
-        
+        role_map = {}  # name -> id
+
         # Helper to get or create role by name
         async def ensure_role(name: str) -> str:
-            if not name or not isinstance(name, str): return None
-            if name in role_map: return role_map[name]
-            role = await session.scalar(select(Role).where(Role.project_id == project.id, Role.name == name))
+            if not name or not isinstance(name, str):
+                return None
+            if name in role_map:
+                return role_map[name]
+            role = await session.scalar(
+                select(Role).where(Role.project_id == project.id, Role.name == name)
+            )
             if not role:
-                role = Role(project_id=project.id, name=name, color=generate_color(name))
+                role = Role(
+                    project_id=project.id, name=name, color=generate_color(name)
+                )
                 session.add(role)
                 await session.flush()
             role_map[name] = role.id
@@ -140,66 +280,110 @@ async def import_yaml(slug: str, file: UploadFile = File(...), session: AsyncSes
         for role_name, modules in data.items():
             if not role_name or not isinstance(modules, dict):
                 continue
-            
+
             role_id = role_map[role_name]
 
             for module_name, actions in modules.items():
                 if module_name == "include":
-                    if not isinstance(actions, list): continue
+                    if not isinstance(actions, list):
+                        continue
                     for parent_name in actions:
                         if parent_name in role_map:
                             parent_id = role_map[parent_name]
-                            link = await session.scalar(select(RoleInheritance).where(
-                                RoleInheritance.parent_role_id == parent_id, 
-                                RoleInheritance.child_role_id == role_id
-                            ))
+                            link = await session.scalar(
+                                select(RoleInheritance).where(
+                                    RoleInheritance.parent_role_id == parent_id,
+                                    RoleInheritance.child_role_id == role_id,
+                                )
+                            )
                             if not link:
-                                session.add(RoleInheritance(parent_role_id=parent_id, child_role_id=role_id))
+                                session.add(
+                                    RoleInheritance(
+                                        parent_role_id=parent_id, child_role_id=role_id
+                                    )
+                                )
                     continue
 
                 if not isinstance(actions, dict):
                     continue
-                    
+
                 for action_name, description in actions.items():
-                    if not action_name: continue
+                    if not action_name:
+                        continue
                     perm_name = f"{module_name}.{action_name}"
-                    
+
                     # Create Permission
-                    perm = await session.scalar(select(Permission).where(Permission.project_id == project.id, Permission.name == perm_name))
+                    perm = await session.scalar(
+                        select(Permission).where(
+                            Permission.project_id == project.id,
+                            Permission.name == perm_name,
+                        )
+                    )
                     if not perm:
-                        perm = Permission(project_id=project.id, name=perm_name, description=str(description))
+                        perm = Permission(
+                            project_id=project.id,
+                            name=perm_name,
+                            description=str(description),
+                        )
                         session.add(perm)
                         await session.flush()
-                    
+
                     # Assign to Role
-                    link = await session.scalar(select(RolePermission).where(RolePermission.role_id == role_id, RolePermission.permission_id == perm.id))
+                    link = await session.scalar(
+                        select(RolePermission).where(
+                            RolePermission.role_id == role_id,
+                            RolePermission.permission_id == perm.id,
+                        )
+                    )
                     if not link:
-                        session.add(RolePermission(role_id=role_id, permission_id=perm.id))
-                    
+                        session.add(
+                            RolePermission(role_id=role_id, permission_id=perm.id)
+                        )
+
                     # Resource Mapping
                     method = guess_method(action_name)
                     path = f"/api/v1/{module_name}/{action_name}"
-                    
-                    res = await session.scalar(select(Resource).where(
-                        Resource.project_id == project.id, 
-                        Resource.method == method, 
-                        Resource.path == path
-                    ))
+
+                    res = await session.scalar(
+                        select(Resource).where(
+                            Resource.project_id == project.id,
+                            Resource.method == method,
+                            Resource.path == path,
+                        )
+                    )
                     if not res:
-                        res = Resource(project_id=project.id, method=method, path=path, description=str(description))
+                        res = Resource(
+                            project_id=project.id,
+                            method=method,
+                            path=path,
+                            description=str(description),
+                        )
                         session.add(res)
                         await session.flush()
-                    
+
                     # Link Permission to Resource
-                    p_res_link = await session.scalar(select(PermissionResource).where(
-                        PermissionResource.permission_id == perm.id, 
-                        PermissionResource.resource_id == res.id
-                    ))
+                    p_res_link = await session.scalar(
+                        select(PermissionResource).where(
+                            PermissionResource.permission_id == perm.id,
+                            PermissionResource.resource_id == res.id,
+                        )
+                    )
                     if not p_res_link:
-                        session.add(PermissionResource(permission_id=perm.id, resource_id=res.id))
+                        session.add(
+                            PermissionResource(
+                                permission_id=perm.id, resource_id=res.id
+                            )
+                        )
 
         await session.commit()
+        logger.info("import.yaml project=%s roles=%d", slug, len(role_map))
         return {"status": "success", "count": len(role_map)}
-    except Exception as e:
+    except HTTPException:
+        raise
+    except Exception:
         await session.rollback()
-        raise HTTPException(status_code=500, detail=f"Import Error: {str(e)}")
+        logger.exception("YAML import failed for project %s", slug)
+        raise HTTPException(
+            status_code=500,
+            detail="Import failed. Check your YAML structure and try again.",
+        ) from None

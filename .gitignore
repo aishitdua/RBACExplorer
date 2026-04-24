@@ -20,14 +20,21 @@ frontend/.env
 # Python Caches
 __pycache__/
 *.pyc
+.ruff_cache/
 .pytest_cache/
 .coverage
 htmlcov/
 
+# Git Worktrees
+.worktrees/
+
 # Build & Tool Caches
 dist/
+frontend/dist/
 build/
 .vite/
+.eslintcache
+.prettiercache
 .superpowers/
 .gemini/
 .claude/
@@ -36,3 +43,4 @@ build/
 # --- MUST NOT IGNORE ---
 # Ensure alembic logic is in git
 !backend/alembic/env.py
+*.db

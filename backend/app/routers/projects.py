@@ -1,16 +1,23 @@
+import logging
+
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
 from slugify import slugify
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.database import get_session
 from app.models import Project
-from app.schemas import ProjectCreate, ProjectOut
+from app.schemas import CleanConfirm, ProjectCreate, ProjectOut
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(tags=["projects"])
 
 
 @router.post("/projects", response_model=ProjectOut, status_code=201)
-async def create_project(body: ProjectCreate, session: AsyncSession = Depends(get_session)):
+async def create_project(
+    body: ProjectCreate, session: AsyncSession = Depends(get_session)
+):
     slug = body.slug or slugify(body.name)
     existing = await session.scalar(select(Project).where(Project.slug == slug))
     if existing:
@@ -19,6 +26,7 @@ async def create_project(body: ProjectCreate, session: AsyncSession = Depends(ge
     session.add(project)
     await session.commit()
     await session.refresh(project)
+    logger.info("project.created slug=%s name=%s", project.slug, project.name)
     return project
 
 
@@ -43,19 +51,30 @@ async def delete_project(slug: str, session: AsyncSession = Depends(get_session)
         raise HTTPException(404, "Project not found")
     await session.delete(project)
     await session.commit()
+    logger.info("project.deleted slug=%s", slug)
 
 
 @router.post("/projects/{slug}/clean", status_code=204)
-async def clean_project(slug: str, session: AsyncSession = Depends(get_session)):
-    from app.models import Role, Permission, Resource
+async def clean_project(
+    slug: str,
+    body: CleanConfirm,
+    session: AsyncSession = Depends(get_session),
+):
     from sqlalchemy import delete
+
+    from app.models import Permission, Resource, Role
+
+    if body.confirm != slug:
+        raise HTTPException(400, "Confirmation slug does not match")
+
     project = await session.scalar(select(Project).where(Project.slug == slug))
     if not project:
         raise HTTPException(404, "Project not found")
-    
+
     # Delete all children
     await session.execute(delete(Role).where(Role.project_id == project.id))
     await session.execute(delete(Permission).where(Permission.project_id == project.id))
     await session.execute(delete(Resource).where(Resource.project_id == project.id))
-    
+
     await session.commit()
+    logger.warning("project.cleaned slug=%s", slug)

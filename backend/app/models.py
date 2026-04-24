@@ -1,7 +1,9 @@
 import uuid
-from datetime import datetime, timezone
-from sqlalchemy import String, ForeignKey, DateTime, UniqueConstraint, func
+from datetime import datetime
+
+from sqlalchemy import DateTime, ForeignKey, String, UniqueConstraint, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
+
 from app.database import Base
 
 
@@ -16,37 +18,61 @@ class Project(Base):
     slug: Mapped[str] = mapped_column(String(128), unique=True, nullable=False)
     name: Mapped[str] = mapped_column(String, nullable=False)
     description: Mapped[str] = mapped_column(String, default="")
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
 
-    roles: Mapped[list["Role"]] = relationship(back_populates="project", cascade="all, delete-orphan")
-    permissions: Mapped[list["Permission"]] = relationship(back_populates="project", cascade="all, delete-orphan")
-    resources: Mapped[list["Resource"]] = relationship(back_populates="project", cascade="all, delete-orphan")
+    roles: Mapped[list["Role"]] = relationship(
+        back_populates="project", cascade="all, delete-orphan"
+    )
+    permissions: Mapped[list["Permission"]] = relationship(
+        back_populates="project", cascade="all, delete-orphan"
+    )
+    resources: Mapped[list["Resource"]] = relationship(
+        back_populates="project", cascade="all, delete-orphan"
+    )
 
 
 class Role(Base):
     __tablename__ = "roles"
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_uuid)
-    project_id: Mapped[str] = mapped_column(String(36), ForeignKey("projects.id", ondelete="CASCADE"), index=True)
+    project_id: Mapped[str] = mapped_column(
+        String(36), ForeignKey("projects.id", ondelete="CASCADE"), index=True
+    )
     name: Mapped[str] = mapped_column(String, nullable=False)
     description: Mapped[str] = mapped_column(String, default="")
     color: Mapped[str] = mapped_column(String(7), default="#60a5fa")
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
 
     project: Mapped["Project"] = relationship(back_populates="roles")
     parent_links: Mapped[list["RoleInheritance"]] = relationship(
         primaryjoin="Role.id == RoleInheritance.child_role_id",
-        back_populates="child_role"
+        back_populates="child_role",
     )
-    permission_links: Mapped[list["RolePermission"]] = relationship(back_populates="role")
+    permission_links: Mapped[list["RolePermission"]] = relationship(
+        back_populates="role"
+    )
     __table_args__ = (UniqueConstraint("project_id", "name"),)
 
 
 class RoleInheritance(Base):
     __tablename__ = "role_inheritance"
 
-    parent_role_id: Mapped[str] = mapped_column(String(36), ForeignKey("roles.id", ondelete="CASCADE"), primary_key=True, index=True)
-    child_role_id: Mapped[str] = mapped_column(String(36), ForeignKey("roles.id", ondelete="CASCADE"), primary_key=True, index=True)
+    parent_role_id: Mapped[str] = mapped_column(
+        String(36),
+        ForeignKey("roles.id", ondelete="CASCADE"),
+        primary_key=True,
+        index=True,
+    )
+    child_role_id: Mapped[str] = mapped_column(
+        String(36),
+        ForeignKey("roles.id", ondelete="CASCADE"),
+        primary_key=True,
+        index=True,
+    )
 
     parent_role: Mapped["Role"] = relationship("Role", foreign_keys=[parent_role_id])
     child_role: Mapped["Role"] = relationship("Role", foreign_keys=[child_role_id])
@@ -56,7 +82,9 @@ class Permission(Base):
     __tablename__ = "permissions"
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_uuid)
-    project_id: Mapped[str] = mapped_column(String(36), ForeignKey("projects.id", ondelete="CASCADE"), index=True)
+    project_id: Mapped[str] = mapped_column(
+        String(36), ForeignKey("projects.id", ondelete="CASCADE"), index=True
+    )
     name: Mapped[str] = mapped_column(String, nullable=False)
     description: Mapped[str] = mapped_column(String, default="")
 
@@ -67,8 +95,18 @@ class Permission(Base):
 class RolePermission(Base):
     __tablename__ = "role_permissions"
 
-    role_id: Mapped[str] = mapped_column(String(36), ForeignKey("roles.id", ondelete="CASCADE"), primary_key=True, index=True)
-    permission_id: Mapped[str] = mapped_column(String(36), ForeignKey("permissions.id", ondelete="CASCADE"), primary_key=True, index=True)
+    role_id: Mapped[str] = mapped_column(
+        String(36),
+        ForeignKey("roles.id", ondelete="CASCADE"),
+        primary_key=True,
+        index=True,
+    )
+    permission_id: Mapped[str] = mapped_column(
+        String(36),
+        ForeignKey("permissions.id", ondelete="CASCADE"),
+        primary_key=True,
+        index=True,
+    )
 
     role: Mapped["Role"] = relationship("Role", back_populates="permission_links")
     permission: Mapped["Permission"] = relationship("Permission")
@@ -78,7 +116,9 @@ class Resource(Base):
     __tablename__ = "resources"
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_uuid)
-    project_id: Mapped[str] = mapped_column(String(36), ForeignKey("projects.id", ondelete="CASCADE"), index=True)
+    project_id: Mapped[str] = mapped_column(
+        String(36), ForeignKey("projects.id", ondelete="CASCADE"), index=True
+    )
     method: Mapped[str] = mapped_column(String(10), nullable=False)
     path: Mapped[str] = mapped_column(String, nullable=False)
     description: Mapped[str] = mapped_column(String, default="")
@@ -90,5 +130,15 @@ class Resource(Base):
 class PermissionResource(Base):
     __tablename__ = "permission_resources"
 
-    permission_id: Mapped[str] = mapped_column(String(36), ForeignKey("permissions.id", ondelete="CASCADE"), primary_key=True, index=True)
-    resource_id: Mapped[str] = mapped_column(String(36), ForeignKey("resources.id", ondelete="CASCADE"), primary_key=True, index=True)
+    permission_id: Mapped[str] = mapped_column(
+        String(36),
+        ForeignKey("permissions.id", ondelete="CASCADE"),
+        primary_key=True,
+        index=True,
+    )
+    resource_id: Mapped[str] = mapped_column(
+        String(36),
+        ForeignKey("resources.id", ondelete="CASCADE"),
+        primary_key=True,
+        index=True,
+    )

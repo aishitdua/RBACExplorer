@@ -17,7 +17,14 @@ describe('SimulatorTab', () => {
       role_id: '1',
       role_name: 'admin',
       resources: [
-        { resource_id: 'r1', method: 'GET', path: '/users', allowed: true, granted_by_permission: 'read_users', granted_by_role: 'admin' },
+        {
+          resource_id: 'r1',
+          method: 'GET',
+          path: '/users',
+          allowed: true,
+          granted_by_permission: 'read_users',
+          granted_by_role: 'admin',
+        },
         { resource_id: 'r2', method: 'DELETE', path: '/users/{id}', allowed: false },
       ],
     })

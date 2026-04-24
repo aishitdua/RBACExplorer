@@ -1,10 +1,11 @@
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
-from sqlalchemy.orm import DeclarativeBase
 from pydantic_settings import BaseSettings, SettingsConfigDict
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+from sqlalchemy.orm import DeclarativeBase
 
 
 class Settings(BaseSettings):
     database_url: str
+    cors_origins: str = "*"  # comma-separated list, "*" = wildcard
     model_config = SettingsConfigDict(env_file=".env")
 
 

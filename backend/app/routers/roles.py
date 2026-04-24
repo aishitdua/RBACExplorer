@@ -1,10 +1,15 @@
+import logging
+
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, text
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.database import get_session
 from app.models import Project, Role, RoleInheritance, RolePermission
-from app.schemas import RoleCreate, RoleUpdate, RoleOut, AddParentBody
+from app.schemas import AddParentBody, RoleCreate, RoleOut, RoleUpdate
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(tags=["roles"])
 
@@ -25,7 +30,9 @@ async def get_role_or_404(role_id: str, project_id: str, session: AsyncSession) 
     return role
 
 
-async def would_create_cycle(child_id: str, parent_id: str, session: AsyncSession) -> bool:
+async def would_create_cycle(
+    child_id: str, parent_id: str, session: AsyncSession
+) -> bool:
     """
     Check if adding parent_id as a parent of child_id would create a cycle.
     A cycle exists if parent_id is already a descendant of child_id.
@@ -50,55 +57,72 @@ async def would_create_cycle(child_id: str, parent_id: str, session: AsyncSessio
 @router.get("/projects/{slug}/roles", response_model=list[dict])
 async def list_roles(slug: str, session: AsyncSession = Depends(get_session)):
     from sqlalchemy.orm import selectinload
+
     project = await session.scalar(select(Project).where(Project.slug == slug))
-    if not project: raise HTTPException(404)
-    
+    if not project:
+        raise HTTPException(404)
+
     roles = await session.scalars(
         select(Role)
         .where(Role.project_id == project.id)
         .options(
             selectinload(Role.parent_links),
-            selectinload(Role.permission_links).selectinload(RolePermission.permission)
+            selectinload(Role.permission_links).selectinload(RolePermission.permission),
         )
     )
-    
+
     result = []
     for r in roles:
-        result.append({
-            "id": r.id,
-            "name": r.name,
-            "color": r.color,
-            "parents": [link.parent_role_id for link in r.parent_links],
-            "permissions": [
-                {
-                    "id": link.permission_id,
-                    "name": link.permission.name,
-                    "module": link.permission.name.split('.')[0] if '.' in link.permission.name else 'other'
-                }
-                for link in r.permission_links
-            ]
-        })
-        
+        result.append(
+            {
+                "id": r.id,
+                "name": r.name,
+                "color": r.color,
+                "parents": [link.parent_role_id for link in r.parent_links],
+                "permissions": [
+                    {
+                        "id": link.permission_id,
+                        "name": link.permission.name,
+                        "module": link.permission.name.split(".")[0]
+                        if "." in link.permission.name
+                        else "other",
+                    }
+                    for link in r.permission_links
+                ],
+            }
+        )
+
     return result
 
 
 @router.post("/projects/{slug}/roles", response_model=RoleOut, status_code=201)
-async def create_role(slug: str, body: RoleCreate, session: AsyncSession = Depends(get_session)):
+async def create_role(
+    slug: str, body: RoleCreate, session: AsyncSession = Depends(get_session)
+):
     project = await get_project_or_404(slug, session)
-    role = Role(project_id=project.id, name=body.name, description=body.description, color=body.color)
+    role = Role(
+        project_id=project.id,
+        name=body.name,
+        description=body.description,
+        color=body.color,
+    )
     session.add(role)
     try:
         await session.commit()
     except IntegrityError:
         await session.rollback()
-        raise HTTPException(400, "Role name already exists in this project")
+        raise HTTPException(400, "Role name already exists in this project") from None
     await session.refresh(role)
+    logger.info("role.created project=%s role=%s id=%s", slug, role.name, role.id)
     return role
 
 
 @router.patch("/projects/{slug}/roles/{role_id}", response_model=RoleOut)
 async def update_role(
-    slug: str, role_id: str, body: RoleUpdate, session: AsyncSession = Depends(get_session)
+    slug: str,
+    role_id: str,
+    body: RoleUpdate,
+    session: AsyncSession = Depends(get_session),
 ):
     project = await get_project_or_404(slug, session)
     role = await get_role_or_404(role_id, project.id, session)
@@ -112,22 +136,29 @@ async def update_role(
         await session.commit()
     except IntegrityError:
         await session.rollback()
-        raise HTTPException(400, "Role name already exists in this project")
+        raise HTTPException(400, "Role name already exists in this project") from None
     await session.refresh(role)
+    logger.info("role.updated project=%s role=%s id=%s", slug, role.name, role.id)
     return role
 
 
 @router.delete("/projects/{slug}/roles/{role_id}", status_code=204)
-async def delete_role(slug: str, role_id: str, session: AsyncSession = Depends(get_session)):
+async def delete_role(
+    slug: str, role_id: str, session: AsyncSession = Depends(get_session)
+):
     project = await get_project_or_404(slug, session)
     role = await get_role_or_404(role_id, project.id, session)
     await session.delete(role)
     await session.commit()
+    logger.info("role.deleted project=%s role_id=%s", slug, role_id)
 
 
 @router.post("/projects/{slug}/roles/{role_id}/parents", response_model=RoleOut)
 async def add_parent(
-    slug: str, role_id: str, body: AddParentBody, session: AsyncSession = Depends(get_session)
+    slug: str,
+    role_id: str,
+    body: AddParentBody,
+    session: AsyncSession = Depends(get_session),
 ):
     project = await get_project_or_404(slug, session)
     child_role = await get_role_or_404(role_id, project.id, session)
@@ -148,17 +179,30 @@ async def add_parent(
 
     # Cycle detection: would adding parent_role as parent of child_role create a cycle?
     if await would_create_cycle(child_role.id, parent_role.id, session):
-        raise HTTPException(400, "Adding this parent would create a cycle in the role hierarchy")
+        raise HTTPException(
+            400, "Adding this parent would create a cycle in the role hierarchy"
+        )
 
-    inheritance = RoleInheritance(parent_role_id=parent_role.id, child_role_id=child_role.id)
+    inheritance = RoleInheritance(
+        parent_role_id=parent_role.id, child_role_id=child_role.id
+    )
     session.add(inheritance)
     await session.commit()
+    logger.info(
+        "role.parent_added project=%s child=%s parent=%s",
+        slug,
+        role_id,
+        body.parent_role_id,
+    )
     return child_role
 
 
 @router.delete("/projects/{slug}/roles/{role_id}/parents/{parent_id}", status_code=204)
 async def remove_parent(
-    slug: str, role_id: str, parent_id: str, session: AsyncSession = Depends(get_session)
+    slug: str,
+    role_id: str,
+    parent_id: str,
+    session: AsyncSession = Depends(get_session),
 ):
     project = await get_project_or_404(slug, session)
     await get_role_or_404(role_id, project.id, session)
@@ -174,3 +218,6 @@ async def remove_parent(
         raise HTTPException(404, "Parent relationship not found")
     await session.delete(link)
     await session.commit()
+    logger.info(
+        "role.parent_removed project=%s child=%s parent=%s", slug, role_id, parent_id
+    )

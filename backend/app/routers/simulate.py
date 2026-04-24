@@ -1,19 +1,24 @@
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, text
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.database import get_session
-from app.models import Project, Role, Resource
-from app.schemas import SimulateOut, SimulatedResource
+from app.models import Project, Resource, Role
+from app.schemas import SimulatedResource, SimulateOut
 
 router = APIRouter(tags=["simulate"])
 
 
 @router.get("/projects/{slug}/simulate/{role_id}", response_model=SimulateOut)
-async def simulate_role(slug: str, role_id: str, session: AsyncSession = Depends(get_session)):
+async def simulate_role(
+    slug: str, role_id: str, session: AsyncSession = Depends(get_session)
+):
     project = await session.scalar(select(Project).where(Project.slug == slug))
     if not project:
         raise HTTPException(404, "Project not found")
-    role = await session.scalar(select(Role).where(Role.id == role_id, Role.project_id == project.id))
+    role = await session.scalar(
+        select(Role).where(Role.id == role_id, Role.project_id == project.id)
+    )
     if not role:
         raise HTTPException(404, "Role not found")
 
@@ -56,20 +61,24 @@ async def simulate_role(slug: str, role_id: str, session: AsyncSession = Depends
     for res in all_resources:
         if res.id in allowed_ids:
             row = allowed_map[res.id]
-            simulated.append(SimulatedResource(
-                resource_id=res.id,
-                method=res.method,
-                path=res.path,
-                allowed=True,
-                granted_by_permission=row.permission_name,
-                granted_by_role=row.role_name,
-            ))
+            simulated.append(
+                SimulatedResource(
+                    resource_id=res.id,
+                    method=res.method,
+                    path=res.path,
+                    allowed=True,
+                    granted_by_permission=row.permission_name,
+                    granted_by_role=row.role_name,
+                )
+            )
         else:
-            simulated.append(SimulatedResource(
-                resource_id=res.id,
-                method=res.method,
-                path=res.path,
-                allowed=False,
-            ))
+            simulated.append(
+                SimulatedResource(
+                    resource_id=res.id,
+                    method=res.method,
+                    path=res.path,
+                    allowed=False,
+                )
+            )
 
     return SimulateOut(role_id=role_id, role_name=role.name, resources=simulated)
