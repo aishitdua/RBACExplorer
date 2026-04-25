@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
+import { UserButton } from '@clerk/clerk-react'
 import { getProject } from '../api/projects'
 import GraphTab from '../tabs/GraphTab'
 import RolesTab from '../tabs/RolesTab'
@@ -48,7 +49,8 @@ export default function WorkspacePage() {
         </button>
         <h1 className="text-white font-semibold">{project.name}</h1>
         <span className="text-gray-500 text-sm font-mono">{slug}</span>
-        <nav className="ml-auto flex gap-1">
+        <nav className="ml-auto flex items-center gap-1">
+          <UserButton afterSignOutUrl="/" />
           {TABS.map((tab) => (
             <button
               key={tab}

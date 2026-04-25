@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { UserButton } from '@clerk/clerk-react'
 import { createProject, listProjects } from '../api/projects'
 
 export default function HomePage() {
@@ -33,6 +34,9 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-gray-950 flex flex-col items-center justify-center p-6 sm:p-8">
+      <div className="absolute top-4 right-4">
+        <UserButton afterSignOutUrl="/" />
+      </div>
       <div className="w-full max-w-lg space-y-10">
         <div className="text-center space-y-3">
           <h1 className="text-5xl font-black text-white tracking-tighter">RBACExplorer</h1>

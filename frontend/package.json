@@ -10,6 +10,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@clerk/clerk-react": "^5.61.6",
     "axios": "^1.15.2",
     "cytoscape": "^3.33.2",
     "cytoscape-fcose": "^2.2.0",
