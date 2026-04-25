@@ -6,6 +6,9 @@ from sqlalchemy.orm import DeclarativeBase
 class Settings(BaseSettings):
     database_url: str
     cors_origins: str = "*"  # comma-separated list, "*" = wildcard
+    clerk_jwks_url: str = (
+        "https://ruling-caiman-0.clerk.accounts.dev/.well-known/jwks.json"
+    )
     model_config = SettingsConfigDict(env_file=".env")
 
 

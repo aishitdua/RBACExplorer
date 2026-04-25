@@ -9,4 +9,6 @@ services:
         sync: false
       - key: CORS_ORIGINS
         value: "https://your-frontend.onrender.com"
+      - key: CLERK_JWKS_URL
+        value: "https://ruling-caiman-0.clerk.accounts.dev/.well-known/jwks.json"
     healthCheckPath: /health
