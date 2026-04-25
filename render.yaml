@@ -1,14 +1,16 @@
+# render.yaml — lives at repo root so Render can discover it
 services:
   - type: web
     name: rbacexplorer-api
     runtime: python
-    buildCommand: pip install -r requirements.txt
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt && alembic upgrade head
     startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
     envVars:
       - key: DATABASE_URL
         sync: false
       - key: CORS_ORIGINS
-        value: "https://your-frontend.onrender.com"
+        sync: false
       - key: CLERK_JWKS_URL
         value: "https://ruling-caiman-0.clerk.accounts.dev/.well-known/jwks.json"
-    healthCheckPath: /health
