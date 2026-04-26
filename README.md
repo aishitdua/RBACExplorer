@@ -96,5 +96,3 @@ RBAC Explorer is built on the principle that **Security should be Visual**. By m
 ```
 
 ---
-
-Generated with ❤️ by Antigravity.
