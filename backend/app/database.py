@@ -9,6 +9,8 @@ class Settings(BaseSettings):
     clerk_jwks_url: str = (
         "https://ruling-caiman-0.clerk.accounts.dev/.well-known/jwks.json"
     )
+    clerk_issuer: str = ""  # e.g. https://ruling-caiman-0.clerk.accounts.dev
+    clerk_audience: str = ""  # leave blank to skip audience check
     model_config = SettingsConfigDict(env_file=".env")
 
 
