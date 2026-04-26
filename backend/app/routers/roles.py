@@ -31,14 +31,14 @@ async def would_create_cycle(
     parent_id is among them.
     """
     # SQLite supports recursive CTEs since 3.8.3
-    sql = text("""
+    sql = text(f"""
         WITH RECURSIVE descendants AS (
             SELECT :child_id AS id, 0 AS depth
             UNION ALL
             SELECT ri.child_role_id, d.depth + 1
             FROM role_inheritance ri
             JOIN descendants d ON ri.parent_role_id = d.id
-            WHERE d.depth < 32
+            WHERE d.depth < {MAX_INHERITANCE_DEPTH}
         )
         SELECT COUNT(*) FROM descendants WHERE id = :parent_id
     """)

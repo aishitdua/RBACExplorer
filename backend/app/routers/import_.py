@@ -205,6 +205,7 @@ async def import_csv(
             "skipped": skipped,
             "invalid": invalid,
             "processed": count,
+            "truncated": count >= 1000,
         }
     except HTTPException:
         raise
@@ -454,7 +455,18 @@ async def import_yaml(
             await session.rollback()
             raise HTTPException(400, "Too many inheritance edges (max 1000)")
 
-        if _has_cycle(new_edges):
+        # Fetch existing edges for roles in this project to detect cross-batch cycles
+        existing_result = await session.execute(
+            select(RoleInheritance).where(
+                RoleInheritance.parent_role_id.in_(list(role_map.values()))
+            )
+        )
+        existing_edges = [
+            (row.parent_role_id, row.child_role_id)
+            for row in existing_result.scalars().all()
+        ]
+        all_edges = existing_edges + new_edges
+        if _has_cycle(all_edges):
             await session.rollback()
             raise HTTPException(400, "Cycle detected in role inheritance")
 

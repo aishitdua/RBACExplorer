@@ -8,6 +8,7 @@ from app.dependencies import (
     get_role_for_project_or_404,
 )
 from app.models import Permission, Resource
+from app.routers.roles import MAX_INHERITANCE_DEPTH
 from app.schemas import AnalyzeOut, ConflictFinding, DiffOut, SimulatedResource
 
 router = APIRouter(tags=["analyze"])
@@ -57,14 +58,14 @@ async def analyze_project(slug: str, current_user: CurrentUser, session: DBSessi
 
     # 3. Redundant assignments
     result = await session.execute(
-        text("""
+        text(f"""
         WITH RECURSIVE ancestors AS (
             SELECT parent_role_id, child_role_id, 0 AS depth FROM role_inheritance
             UNION ALL
             SELECT ri.parent_role_id, a.child_role_id, a.depth + 1
             FROM role_inheritance ri
             JOIN ancestors a ON ri.child_role_id = a.parent_role_id
-            WHERE a.depth < 32
+            WHERE a.depth < {MAX_INHERITANCE_DEPTH}
         )
         SELECT DISTINCT
             r.id AS role_id,
@@ -132,14 +133,14 @@ async def diff_role(
     ) -> set:
         # Get current permissions via ancestor walk
         result = await session.execute(
-            text("""
+            text(f"""
             WITH RECURSIVE role_ancestors AS (
                 SELECT :role_id AS id, 0 AS depth
                 UNION ALL
                 SELECT ri.parent_role_id, ra.depth + 1
                 FROM role_inheritance ri
                 JOIN role_ancestors ra ON ri.child_role_id = ra.id
-                WHERE ra.depth < 32
+                WHERE ra.depth < {MAX_INHERITANCE_DEPTH}
             )
             SELECT DISTINCT rp.permission_id
             FROM role_permissions rp

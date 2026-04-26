@@ -8,6 +8,7 @@ from app.dependencies import (
     get_role_for_project_or_404,
 )
 from app.models import Resource
+from app.routers.roles import MAX_INHERITANCE_DEPTH
 from app.schemas import SimulatedResource, SimulateOut
 
 router = APIRouter(tags=["simulate"])
@@ -22,14 +23,14 @@ async def simulate_role(
 
     # Recursive CTE: collect all ancestor role IDs including the role itself
     allowed_result = await session.execute(
-        text("""
+        text(f"""
         WITH RECURSIVE role_ancestors AS (
             SELECT :role_id AS id, 0 AS depth
             UNION ALL
             SELECT ri.parent_role_id, ra.depth + 1
             FROM role_inheritance ri
             JOIN role_ancestors ra ON ri.child_role_id = ra.id
-            WHERE ra.depth < 32
+            WHERE ra.depth < {MAX_INHERITANCE_DEPTH}
         )
         SELECT DISTINCT
             res.id AS resource_id,
