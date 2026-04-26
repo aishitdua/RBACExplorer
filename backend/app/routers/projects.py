@@ -1,13 +1,10 @@
 import logging
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, HTTPException
 from slugify import slugify
 from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.auth import get_current_user
-from app.database import get_session
-from app.dependencies import get_project_for_user_or_404
+from app.dependencies import CurrentUser, DBSession, get_project_for_user_or_404
 from app.models import Project
 from app.schemas import CleanConfirm, ProjectCreate, ProjectOut
 
@@ -19,8 +16,8 @@ router = APIRouter(tags=["projects"])
 @router.post("/projects", response_model=ProjectOut, status_code=201)
 async def create_project(
     body: ProjectCreate,
-    session: AsyncSession = Depends(get_session),
-    current_user: str = Depends(get_current_user),
+    session: DBSession,
+    current_user: CurrentUser,
 ):
     slug = body.slug or slugify(body.name)
     existing = await session.scalar(
@@ -45,8 +42,8 @@ async def create_project(
 
 @router.get("/projects", response_model=list[ProjectOut])
 async def list_projects(
-    session: AsyncSession = Depends(get_session),
-    current_user: str = Depends(get_current_user),
+    session: DBSession,
+    current_user: CurrentUser,
 ):
     result = await session.execute(
         select(Project)
@@ -59,8 +56,8 @@ async def list_projects(
 @router.get("/projects/{slug}", response_model=ProjectOut)
 async def get_project(
     slug: str,
-    session: AsyncSession = Depends(get_session),
-    current_user: str = Depends(get_current_user),
+    session: DBSession,
+    current_user: CurrentUser,
 ):
     return await get_project_for_user_or_404(slug, current_user, session)
 
@@ -68,8 +65,8 @@ async def get_project(
 @router.delete("/projects/{slug}", status_code=204)
 async def delete_project(
     slug: str,
-    session: AsyncSession = Depends(get_session),
-    current_user: str = Depends(get_current_user),
+    session: DBSession,
+    current_user: CurrentUser,
 ):
     project = await get_project_for_user_or_404(slug, current_user, session)
     await session.delete(project)
@@ -81,8 +78,8 @@ async def delete_project(
 async def clean_project(
     slug: str,
     body: CleanConfirm,
-    session: AsyncSession = Depends(get_session),
-    current_user: str = Depends(get_current_user),
+    session: DBSession,
+    current_user: CurrentUser,
 ):
     from sqlalchemy import delete
 

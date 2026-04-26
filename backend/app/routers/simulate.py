@@ -1,8 +1,13 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter
 from sqlalchemy import select, text
 
-from app.dependencies import CurrentUser, DBSession, get_project_for_user_or_404
-from app.models import Resource, Role
+from app.dependencies import (
+    CurrentUser,
+    DBSession,
+    get_project_for_user_or_404,
+    get_role_for_project_or_404,
+)
+from app.models import Resource
 from app.schemas import SimulatedResource, SimulateOut
 
 router = APIRouter(tags=["simulate"])
@@ -13,11 +18,7 @@ async def simulate_role(
     slug: str, role_id: str, current_user: CurrentUser, session: DBSession
 ):
     project = await get_project_for_user_or_404(slug, current_user, session)
-    role = await session.scalar(
-        select(Role).where(Role.id == role_id, Role.project_id == project.id)
-    )
-    if not role:
-        raise HTTPException(404, "Role not found")
+    role = await get_role_for_project_or_404(role_id, project.id, session)
 
     # Recursive CTE: collect all ancestor role IDs including the role itself
     allowed_result = await session.execute(

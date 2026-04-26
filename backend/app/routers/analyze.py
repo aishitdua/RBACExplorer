@@ -1,8 +1,13 @@
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, HTTPException, Query
 from sqlalchemy import select, text
 
-from app.dependencies import CurrentUser, DBSession, get_project_for_user_or_404
-from app.models import Permission, Resource, Role
+from app.dependencies import (
+    CurrentUser,
+    DBSession,
+    get_project_for_user_or_404,
+    get_role_for_project_or_404,
+)
+from app.models import Permission, Resource
 from app.schemas import AnalyzeOut, ConflictFinding, DiffOut, SimulatedResource
 
 router = APIRouter(tags=["analyze"])
@@ -103,13 +108,7 @@ async def diff_role(
     project = await get_project_for_user_or_404(slug, current_user, session)
 
     # Validate that role_id belongs to this project
-    role = await session.scalar(
-        select(Role).where(Role.id == role_id, Role.project_id == project.id)
-    )
-    if not role:
-        from fastapi import HTTPException
-
-        raise HTTPException(404, "Role not found")
+    await get_role_for_project_or_404(role_id, project.id, session)
 
     # Validate add_permissions and remove_permissions IDs belong to this project
     all_supplied_ids = set(add_permissions) | set(remove_permissions)
@@ -123,8 +122,6 @@ async def diff_role(
         valid_ids = set(valid_perms.all())
         foreign_ids = all_supplied_ids - valid_ids
         if foreign_ids:
-            from fastapi import HTTPException
-
             raise HTTPException(
                 400, "One or more permission IDs do not belong to this project"
             )

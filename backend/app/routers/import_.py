@@ -102,8 +102,8 @@ async def import_csv(
     session: DBSession,
     file: UploadFile = File(...),
 ):
-    content = await read_upload_with_limit(file, ALLOWED_CSV_TYPES)
     project = await get_project_for_user_or_404(slug, current_user, session)
+    content = await read_upload_with_limit(file, ALLOWED_CSV_TYPES)
 
     string_content = content.decode("utf-8")
     reader = csv.DictReader(io.StringIO(string_content))
