@@ -166,7 +166,7 @@ async def diff_role(
         )
         return {row[0] for row in res_result.fetchall()}
 
-    before_ids = await resolve_allowed_resource_ids(set(), set(remove_permissions))
+    before_ids = await resolve_allowed_resource_ids(set(), set())
     after_ids = await resolve_allowed_resource_ids(
         set(add_permissions), set(remove_permissions)
     )
