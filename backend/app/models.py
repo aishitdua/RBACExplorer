@@ -15,7 +15,10 @@ class Project(Base):
     __tablename__ = "projects"
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_uuid)
-    slug: Mapped[str] = mapped_column(String(128), unique=True, nullable=False)
+    slug: Mapped[str] = mapped_column(String(128), nullable=False)
+    owner_user_id: Mapped[str | None] = mapped_column(
+        String(256), nullable=True, index=True
+    )
     name: Mapped[str] = mapped_column(String, nullable=False)
     description: Mapped[str] = mapped_column(String, default="")
     created_at: Mapped[datetime] = mapped_column(
@@ -30,6 +33,10 @@ class Project(Base):
     )
     resources: Mapped[list["Resource"]] = relationship(
         back_populates="project", cascade="all, delete-orphan"
+    )
+
+    __table_args__ = (
+        UniqueConstraint("owner_user_id", "slug", name="uq_projects_owner_slug"),
     )
 
 

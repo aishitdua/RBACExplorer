@@ -5,6 +5,7 @@ from slugify import slugify
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.auth import get_current_user
 from app.database import get_session
 from app.models import Project
 from app.schemas import CleanConfirm, ProjectCreate, ProjectOut
@@ -14,15 +15,37 @@ logger = logging.getLogger(__name__)
 router = APIRouter(tags=["projects"])
 
 
+async def get_project_for_user_or_404(
+    slug: str, user_id: str, session: AsyncSession
+) -> Project:
+    project = await session.scalar(
+        select(Project).where(Project.slug == slug, Project.owner_user_id == user_id)
+    )
+    if not project:
+        raise HTTPException(404, "Project not found")
+    return project
+
+
 @router.post("/projects", response_model=ProjectOut, status_code=201)
 async def create_project(
-    body: ProjectCreate, session: AsyncSession = Depends(get_session)
+    body: ProjectCreate,
+    session: AsyncSession = Depends(get_session),
+    current_user: str = Depends(get_current_user),
 ):
     slug = body.slug or slugify(body.name)
-    existing = await session.scalar(select(Project).where(Project.slug == slug))
+    existing = await session.scalar(
+        select(Project).where(
+            Project.slug == slug, Project.owner_user_id == current_user
+        )
+    )
     if existing:
         raise HTTPException(400, "Slug already taken")
-    project = Project(slug=slug, name=body.name, description=body.description)
+    project = Project(
+        slug=slug,
+        name=body.name,
+        description=body.description,
+        owner_user_id=current_user,
+    )
     session.add(project)
     await session.commit()
     await session.refresh(project)
@@ -31,24 +54,34 @@ async def create_project(
 
 
 @router.get("/projects", response_model=list[ProjectOut])
-async def list_projects(session: AsyncSession = Depends(get_session)):
-    result = await session.execute(select(Project).order_by(Project.created_at.desc()))
+async def list_projects(
+    session: AsyncSession = Depends(get_session),
+    current_user: str = Depends(get_current_user),
+):
+    result = await session.execute(
+        select(Project)
+        .where(Project.owner_user_id == current_user)
+        .order_by(Project.created_at.desc())
+    )
     return result.scalars().all()
 
 
 @router.get("/projects/{slug}", response_model=ProjectOut)
-async def get_project(slug: str, session: AsyncSession = Depends(get_session)):
-    project = await session.scalar(select(Project).where(Project.slug == slug))
-    if not project:
-        raise HTTPException(404, "Project not found")
-    return project
+async def get_project(
+    slug: str,
+    session: AsyncSession = Depends(get_session),
+    current_user: str = Depends(get_current_user),
+):
+    return await get_project_for_user_or_404(slug, current_user, session)
 
 
 @router.delete("/projects/{slug}", status_code=204)
-async def delete_project(slug: str, session: AsyncSession = Depends(get_session)):
-    project = await session.scalar(select(Project).where(Project.slug == slug))
-    if not project:
-        raise HTTPException(404, "Project not found")
+async def delete_project(
+    slug: str,
+    session: AsyncSession = Depends(get_session),
+    current_user: str = Depends(get_current_user),
+):
+    project = await get_project_for_user_or_404(slug, current_user, session)
     await session.delete(project)
     await session.commit()
     logger.info("project.deleted slug=%s", slug)
@@ -59,6 +92,7 @@ async def clean_project(
     slug: str,
     body: CleanConfirm,
     session: AsyncSession = Depends(get_session),
+    current_user: str = Depends(get_current_user),
 ):
     from sqlalchemy import delete
 
@@ -67,9 +101,7 @@ async def clean_project(
     if body.confirm != slug:
         raise HTTPException(400, "Confirmation slug does not match")
 
-    project = await session.scalar(select(Project).where(Project.slug == slug))
-    if not project:
-        raise HTTPException(404, "Project not found")
+    project = await get_project_for_user_or_404(slug, current_user, session)
 
     # Delete all children
     await session.execute(delete(Role).where(Role.project_id == project.id))
