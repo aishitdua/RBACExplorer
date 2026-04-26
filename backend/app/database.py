@@ -6,9 +6,7 @@ from sqlalchemy.orm import DeclarativeBase
 class Settings(BaseSettings):
     database_url: str
     cors_origins: str = "*"  # comma-separated list, "*" = wildcard
-    clerk_jwks_url: str = (
-        "https://ruling-caiman-0.clerk.accounts.dev/.well-known/jwks.json"
-    )
+    clerk_jwks_url: str = ""
     clerk_issuer: str = ""  # e.g. https://ruling-caiman-0.clerk.accounts.dev
     clerk_audience: str = ""  # leave blank to skip audience check
     model_config = SettingsConfigDict(env_file=".env")
