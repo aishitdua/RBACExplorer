@@ -1,7 +1,5 @@
 import { useState } from 'react'
-import axios from 'axios'
-
-const API_URL = import.meta.env.VITE_API_URL
+import client from '../api/client'
 
 export default function ImportTab({ slug }) {
   const [loading, setLoading] = useState(false)
@@ -18,7 +16,7 @@ export default function ImportTab({ slug }) {
 
     try {
       const endpoint = type === 'csv' ? 'csv' : 'yaml'
-      await axios.post(`${API_URL}/api/v1/projects/${slug}/import/${endpoint}`, formData)
+      await client.post(`/api/v1/projects/${slug}/import/${endpoint}`, formData)
       setMessage({ type: 'success', text: `Successfully imported ${type.toUpperCase()} file.` })
     } catch (err) {
       setMessage({ type: 'error', text: err.response?.data?.detail || 'Import failed.' })
@@ -168,7 +166,7 @@ roles:
               ) {
                 setLoading(true)
                 try {
-                  await axios.post(`${API_URL}/api/v1/projects/${slug}/clean`, { confirm: slug })
+                  await client.post(`/api/v1/projects/${slug}/clean`, { confirm: slug })
                   setMessage({ type: 'success', text: 'Project cleaned successfully.' })
                 } catch (err) {
                   setMessage({ type: 'error', text: 'Failed to clean project.' })
