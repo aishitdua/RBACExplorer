@@ -19,13 +19,27 @@ class Base(DeclarativeBase):
     pass
 
 
-def _asyncpg_url(url: str) -> str:
-    """Convert a standard postgresql:// URL to the asyncpg dialect."""
-    if url.startswith("postgresql://"):
-        return url.replace("postgresql://", "postgresql+asyncpg://", 1)
-    if url.startswith("postgres://"):
-        return url.replace("postgres://", "postgresql+asyncpg://", 1)
-    return url  # already has a driver specified
+def _asyncpg_url(url: str) -> tuple[str, dict]:
+    """Convert a standard postgresql:// URL to the asyncpg dialect.
+
+    Also strips sslmode query param (not supported by asyncpg) and returns
+    connect_args with ssl=True if sslmode=require was present.
+    """
+    from urllib.parse import parse_qs, urlencode, urlparse, urlunparse
+
+    parsed = urlparse(url)
+    params = parse_qs(parsed.query, keep_blank_values=True)
+    sslmode = params.pop("sslmode", [None])[0]
+    new_query = urlencode({k: v[0] for k, v in params.items()})
+    clean = urlunparse(parsed._replace(query=new_query))
+
+    if clean.startswith("postgresql://"):
+        clean = clean.replace("postgresql://", "postgresql+asyncpg://", 1)
+    elif clean.startswith("postgres://"):
+        clean = clean.replace("postgres://", "postgresql+asyncpg://", 1)
+
+    connect_args = {"ssl": True} if sslmode == "require" else {}
+    return clean, connect_args
 
 
 _engine = None
@@ -35,7 +49,8 @@ _AsyncSessionFactory = None
 def get_engine():
     global _engine
     if _engine is None:
-        _engine = create_async_engine(_asyncpg_url(settings.database_url), echo=False)
+        url, connect_args = _asyncpg_url(settings.database_url)
+        _engine = create_async_engine(url, echo=False, connect_args=connect_args)
     return _engine
 
 
