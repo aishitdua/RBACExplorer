@@ -1,33 +1,22 @@
 import logging
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, HTTPException
 from sqlalchemy import select, text
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.database import get_session
-from app.models import Project, Role, RoleInheritance, RolePermission
+from app.dependencies import (
+    CurrentUser,
+    DBSession,
+    get_project_for_user_or_404,
+    get_role_for_project_or_404,
+)
+from app.models import Role, RoleInheritance, RolePermission
 from app.schemas import AddParentBody, RoleCreate, RoleOut, RoleUpdate
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(tags=["roles"])
-
-
-async def get_project_or_404(slug: str, session: AsyncSession) -> Project:
-    project = await session.scalar(select(Project).where(Project.slug == slug))
-    if not project:
-        raise HTTPException(404, "Project not found")
-    return project
-
-
-async def get_role_or_404(role_id: str, project_id: str, session: AsyncSession) -> Role:
-    role = await session.scalar(
-        select(Role).where(Role.id == role_id, Role.project_id == project_id)
-    )
-    if not role:
-        raise HTTPException(404, "Role not found")
-    return role
 
 
 async def would_create_cycle(
@@ -55,12 +44,10 @@ async def would_create_cycle(
 
 
 @router.get("/projects/{slug}/roles", response_model=list[dict])
-async def list_roles(slug: str, session: AsyncSession = Depends(get_session)):
+async def list_roles(slug: str, current_user: CurrentUser, session: DBSession):
     from sqlalchemy.orm import selectinload
 
-    project = await session.scalar(select(Project).where(Project.slug == slug))
-    if not project:
-        raise HTTPException(404)
+    project = await get_project_for_user_or_404(slug, current_user, session)
 
     roles = await session.scalars(
         select(Role)
@@ -97,9 +84,9 @@ async def list_roles(slug: str, session: AsyncSession = Depends(get_session)):
 
 @router.post("/projects/{slug}/roles", response_model=RoleOut, status_code=201)
 async def create_role(
-    slug: str, body: RoleCreate, session: AsyncSession = Depends(get_session)
+    slug: str, body: RoleCreate, current_user: CurrentUser, session: DBSession
 ):
-    project = await get_project_or_404(slug, session)
+    project = await get_project_for_user_or_404(slug, current_user, session)
     role = Role(
         project_id=project.id,
         name=body.name,
@@ -122,10 +109,11 @@ async def update_role(
     slug: str,
     role_id: str,
     body: RoleUpdate,
-    session: AsyncSession = Depends(get_session),
+    current_user: CurrentUser,
+    session: DBSession,
 ):
-    project = await get_project_or_404(slug, session)
-    role = await get_role_or_404(role_id, project.id, session)
+    project = await get_project_for_user_or_404(slug, current_user, session)
+    role = await get_role_for_project_or_404(role_id, project.id, session)
     if body.name is not None:
         role.name = body.name
     if body.description is not None:
@@ -144,10 +132,10 @@ async def update_role(
 
 @router.delete("/projects/{slug}/roles/{role_id}", status_code=204)
 async def delete_role(
-    slug: str, role_id: str, session: AsyncSession = Depends(get_session)
+    slug: str, role_id: str, current_user: CurrentUser, session: DBSession
 ):
-    project = await get_project_or_404(slug, session)
-    role = await get_role_or_404(role_id, project.id, session)
+    project = await get_project_for_user_or_404(slug, current_user, session)
+    role = await get_role_for_project_or_404(role_id, project.id, session)
     await session.delete(role)
     await session.commit()
     logger.info("role.deleted project=%s role_id=%s", slug, role_id)
@@ -158,11 +146,14 @@ async def add_parent(
     slug: str,
     role_id: str,
     body: AddParentBody,
-    session: AsyncSession = Depends(get_session),
+    current_user: CurrentUser,
+    session: DBSession,
 ):
-    project = await get_project_or_404(slug, session)
-    child_role = await get_role_or_404(role_id, project.id, session)
-    parent_role = await get_role_or_404(body.parent_role_id, project.id, session)
+    project = await get_project_for_user_or_404(slug, current_user, session)
+    child_role = await get_role_for_project_or_404(role_id, project.id, session)
+    parent_role = await get_role_for_project_or_404(
+        body.parent_role_id, project.id, session
+    )
 
     if child_role.id == parent_role.id:
         raise HTTPException(400, "A role cannot inherit from itself")
@@ -202,11 +193,12 @@ async def remove_parent(
     slug: str,
     role_id: str,
     parent_id: str,
-    session: AsyncSession = Depends(get_session),
+    current_user: CurrentUser,
+    session: DBSession,
 ):
-    project = await get_project_or_404(slug, session)
-    await get_role_or_404(role_id, project.id, session)
-    await get_role_or_404(parent_id, project.id, session)
+    project = await get_project_for_user_or_404(slug, current_user, session)
+    await get_role_for_project_or_404(role_id, project.id, session)
+    await get_role_for_project_or_404(parent_id, project.id, session)
 
     link = await session.scalar(
         select(RoleInheritance).where(

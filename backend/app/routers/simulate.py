@@ -1,9 +1,8 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, HTTPException
 from sqlalchemy import select, text
-from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.database import get_session
-from app.models import Project, Resource, Role
+from app.dependencies import CurrentUser, DBSession, get_project_for_user_or_404
+from app.models import Resource, Role
 from app.schemas import SimulatedResource, SimulateOut
 
 router = APIRouter(tags=["simulate"])
@@ -11,11 +10,9 @@ router = APIRouter(tags=["simulate"])
 
 @router.get("/projects/{slug}/simulate/{role_id}", response_model=SimulateOut)
 async def simulate_role(
-    slug: str, role_id: str, session: AsyncSession = Depends(get_session)
+    slug: str, role_id: str, current_user: CurrentUser, session: DBSession
 ):
-    project = await session.scalar(select(Project).where(Project.slug == slug))
-    if not project:
-        raise HTTPException(404, "Project not found")
+    project = await get_project_for_user_or_404(slug, current_user, session)
     role = await session.scalar(
         select(Role).where(Role.id == role_id, Role.project_id == project.id)
     )

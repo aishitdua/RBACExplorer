@@ -7,23 +7,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth import get_current_user
 from app.database import get_session
+from app.dependencies import get_project_for_user_or_404
 from app.models import Project
 from app.schemas import CleanConfirm, ProjectCreate, ProjectOut
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(tags=["projects"])
-
-
-async def get_project_for_user_or_404(
-    slug: str, user_id: str, session: AsyncSession
-) -> Project:
-    project = await session.scalar(
-        select(Project).where(Project.slug == slug, Project.owner_user_id == user_id)
-    )
-    if not project:
-        raise HTTPException(404, "Project not found")
-    return project
 
 
 @router.post("/projects", response_model=ProjectOut, status_code=201)

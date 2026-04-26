@@ -3,15 +3,13 @@ import io
 import logging
 
 import yaml
-from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
+from fastapi import APIRouter, File, HTTPException, UploadFile
 from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.database import get_session
+from app.dependencies import CurrentUser, DBSession, get_project_for_user_or_404
 from app.models import (
     Permission,
     PermissionResource,
-    Project,
     Resource,
     Role,
     RoleInheritance,
@@ -60,11 +58,9 @@ async def read_upload_with_limit(file: UploadFile, allowed_types: set[str]) -> b
 
 @router.post("/projects/{slug}/import/openapi")
 async def import_openapi(
-    slug: str, body: dict, session: AsyncSession = Depends(get_session)
+    slug: str, body: dict, current_user: CurrentUser, session: DBSession
 ):
-    project = await session.scalar(select(Project).where(Project.slug == slug))
-    if not project:
-        raise HTTPException(404, "Project not found")
+    project = await get_project_for_user_or_404(slug, current_user, session)
 
     paths = body.get("paths", {})
     created = 0
@@ -102,13 +98,12 @@ async def import_openapi(
 @router.post("/projects/{slug}/import/csv")
 async def import_csv(
     slug: str,
+    current_user: CurrentUser,
+    session: DBSession,
     file: UploadFile = File(...),
-    session: AsyncSession = Depends(get_session),
 ):
     content = await read_upload_with_limit(file, ALLOWED_CSV_TYPES)
-    project = await session.scalar(select(Project).where(Project.slug == slug))
-    if not project:
-        raise HTTPException(404, "Project not found")
+    project = await get_project_for_user_or_404(slug, current_user, session)
 
     string_content = content.decode("utf-8")
     reader = csv.DictReader(io.StringIO(string_content))
@@ -156,12 +151,11 @@ async def import_csv(
 @router.post("/projects/{slug}/import/yaml")
 async def import_yaml(
     slug: str,
+    current_user: CurrentUser,
+    session: DBSession,
     file: UploadFile = File(...),
-    session: AsyncSession = Depends(get_session),
 ):
-    project = await session.scalar(select(Project).where(Project.slug == slug))
-    if not project:
-        raise HTTPException(404, "Project not found")
+    project = await get_project_for_user_or_404(slug, current_user, session)
 
     try:
         content = await read_upload_with_limit(file, ALLOWED_YAML_TYPES)

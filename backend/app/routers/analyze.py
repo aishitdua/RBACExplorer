@@ -1,19 +1,16 @@
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Query
 from sqlalchemy import select, text
-from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.database import get_session
-from app.models import Permission, Project, Resource, Role
+from app.dependencies import CurrentUser, DBSession, get_project_for_user_or_404
+from app.models import Permission, Resource, Role
 from app.schemas import AnalyzeOut, ConflictFinding, DiffOut, SimulatedResource
 
 router = APIRouter(tags=["analyze"])
 
 
 @router.get("/projects/{slug}/analyze", response_model=AnalyzeOut)
-async def analyze_project(slug: str, session: AsyncSession = Depends(get_session)):
-    project = await session.scalar(select(Project).where(Project.slug == slug))
-    if not project:
-        raise HTTPException(404, "Project not found")
+async def analyze_project(slug: str, current_user: CurrentUser, session: DBSession):
+    project = await get_project_for_user_or_404(slug, current_user, session)
 
     findings = []
 
@@ -98,19 +95,20 @@ async def analyze_project(slug: str, session: AsyncSession = Depends(get_session
 async def diff_role(
     slug: str,
     role_id: str,
+    current_user: CurrentUser,
+    session: DBSession,
     add_permissions: list[str] = Query(default=[]),
     remove_permissions: list[str] = Query(default=[]),
-    session: AsyncSession = Depends(get_session),
 ):
-    project = await session.scalar(select(Project).where(Project.slug == slug))
-    if not project:
-        raise HTTPException(404, "Project not found")
+    project = await get_project_for_user_or_404(slug, current_user, session)
 
     # Validate that role_id belongs to this project
     role = await session.scalar(
         select(Role).where(Role.id == role_id, Role.project_id == project.id)
     )
     if not role:
+        from fastapi import HTTPException
+
         raise HTTPException(404, "Role not found")
 
     # Validate add_permissions and remove_permissions IDs belong to this project
@@ -125,6 +123,8 @@ async def diff_role(
         valid_ids = set(valid_perms.all())
         foreign_ids = all_supplied_ids - valid_ids
         if foreign_ids:
+            from fastapi import HTTPException
+
             raise HTTPException(
                 400, "One or more permission IDs do not belong to this project"
             )
