@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { UserButton } from '@clerk/clerk-react'
+import { UserButton, useAuth } from '@clerk/clerk-react'
 import { createProject, listProjects } from '../api/projects'
+import { setAuthToken } from '../api/client'
 
 export default function HomePage() {
   const [projects, setProjects] = useState([])
@@ -10,10 +11,15 @@ export default function HomePage() {
   const [search, setSearch] = useState('')
   const [error, setError] = useState('')
   const navigate = useNavigate()
+  const { isLoaded, isSignedIn, getToken } = useAuth()
 
   useEffect(() => {
-    listProjects().then(setProjects).catch(console.error)
-  }, [])
+    if (!isLoaded || !isSignedIn) return
+    getToken().then((token) => {
+      setAuthToken(token)
+      listProjects().then(setProjects).catch(console.error)
+    })
+  }, [isLoaded, isSignedIn, getToken])
 
   const handleCreate = async (e) => {
     e.preventDefault()
@@ -116,7 +122,7 @@ export default function HomePage() {
                 onChange={(e) => setSearch(e.target.value)}
               />
 
-              {search && (
+              {(search || projects.length > 0) && (
                 <div className="absolute top-full left-0 right-0 mt-3 bg-gray-900 border border-gray-800 rounded-2xl shadow-2xl overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-200">
                   <div className="max-h-60 overflow-y-auto py-2">
                     {filteredProjects.length > 0 ? (
