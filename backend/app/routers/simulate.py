@@ -24,11 +24,12 @@ async def simulate_role(
     allowed_result = await session.execute(
         text("""
         WITH RECURSIVE role_ancestors AS (
-            SELECT :role_id AS id
+            SELECT :role_id AS id, 0 AS depth
             UNION ALL
-            SELECT ri.parent_role_id
+            SELECT ri.parent_role_id, ra.depth + 1
             FROM role_inheritance ri
             JOIN role_ancestors ra ON ri.child_role_id = ra.id
+            WHERE ra.depth < 32
         )
         SELECT DISTINCT
             res.id AS resource_id,

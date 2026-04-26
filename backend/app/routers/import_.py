@@ -1,6 +1,7 @@
 import csv
 import io
 import logging
+from collections import defaultdict
 
 import yaml
 from fastapi import APIRouter, File, HTTPException, UploadFile
@@ -56,6 +57,33 @@ async def read_upload_with_limit(file: UploadFile, allowed_types: set[str]) -> b
     return data
 
 
+def _has_cycle(edges: list[tuple[str, str]]) -> bool:
+    """Check if the directed graph formed by (parent_id, child_id) edges has a cycle."""
+    children = defaultdict(set)
+    for parent, child in edges:
+        children[parent].add(child)
+
+    def dfs(node, visited, stack):
+        visited.add(node)
+        stack.add(node)
+        for neighbor in children.get(node, set()):
+            if neighbor not in visited:
+                if dfs(neighbor, visited, stack):
+                    return True
+            elif neighbor in stack:
+                return True
+        stack.discard(node)
+        return False
+
+    all_nodes = set(children.keys()) | {c for s in children.values() for c in s}
+    visited = set()
+    for node in all_nodes:
+        if node not in visited:
+            if dfs(node, visited, set()):
+                return True
+    return False
+
+
 @router.post("/projects/{slug}/import/openapi")
 async def import_openapi(
     slug: str, body: dict, current_user: CurrentUser, session: DBSession
@@ -66,11 +94,27 @@ async def import_openapi(
     created = 0
     skipped = 0
 
+    if not isinstance(paths, dict):
+        raise HTTPException(400, "Invalid OpenAPI spec: 'paths' must be an object")
+
     if len(paths) > 500:
         raise HTTPException(400, "Too many paths in OpenAPI spec (max 500)")
 
     for path, methods in paths.items():
-        for method in methods:
+        if not isinstance(path, str) or not path.startswith("/"):
+            skipped += 1
+            continue
+
+        if not isinstance(methods, dict):
+            skipped += 1
+            continue
+
+        method_keys = list(methods.keys())
+        if len(method_keys) > 20:
+            method_keys = method_keys[:20]
+            skipped += len(methods) - 20
+
+        for method in method_keys:
             if method.lower() not in SUPPORTED_METHODS:
                 continue
             existing = await session.scalar(
@@ -105,47 +149,72 @@ async def import_csv(
     project = await get_project_for_user_or_404(slug, current_user, session)
     content = await read_upload_with_limit(file, ALLOWED_CSV_TYPES)
 
-    string_content = content.decode("utf-8")
-    reader = csv.DictReader(io.StringIO(string_content))
+    try:
+        string_content = content.decode("utf-8")
+        reader = csv.DictReader(io.StringIO(string_content))
 
-    created = 0
-    skipped = 0
-    count = 0
-    for row in reader:
-        count += 1
-        if count > 1000:
-            break
+        created = 0
+        skipped = 0
+        invalid = 0
+        count = 0
+        for row in reader:
+            count += 1
+            if count > 1000:
+                break
 
-        method = row.get("method", "").upper()
-        if method not in {"GET", "POST", "PUT", "PATCH", "DELETE"}:
-            continue
+            method = row.get("method", "").upper()
+            path = row.get("path", "")
 
-        path = row.get("path", "")
-        desc = row.get("description", "")
+            # A row is invalid if method is not in the allowed set OR path is empty
+            if method not in {"GET", "POST", "PUT", "PATCH", "DELETE"} or not path:
+                invalid += 1
+                continue
 
-        if not method or not path:
-            continue
+            desc = row.get("description", "")
 
-        existing = await session.scalar(
-            select(Resource).where(
-                Resource.project_id == project.id,
-                Resource.method == method,
-                Resource.path == path,
-            )
-        )
-        if existing:
-            skipped += 1
-        else:
-            session.add(
-                Resource(
-                    project_id=project.id, method=method, path=path, description=desc
+            existing = await session.scalar(
+                select(Resource).where(
+                    Resource.project_id == project.id,
+                    Resource.method == method,
+                    Resource.path == path,
                 )
             )
-            created += 1
+            if existing:
+                skipped += 1
+            else:
+                session.add(
+                    Resource(
+                        project_id=project.id,
+                        method=method,
+                        path=path,
+                        description=desc,
+                    )
+                )
+                created += 1
 
-    await session.commit()
-    logger.info("import.csv project=%s created=%d skipped=%d", slug, created, skipped)
-    return {"created": created, "skipped": skipped, "processed": count}
+        await session.commit()
+        logger.info(
+            "import.csv project=%s created=%d skipped=%d invalid=%d",
+            slug,
+            created,
+            skipped,
+            invalid,
+        )
+        return {
+            "created": created,
+            "skipped": skipped,
+            "invalid": invalid,
+            "processed": count,
+        }
+    except HTTPException:
+        raise
+    except Exception:
+        await session.rollback()
+        logger.exception("CSV import failed for project %s", slug)
+        raise HTTPException(
+            status_code=500,
+            detail="Import failed. Check your CSV structure and try again.",
+        ) from None
 
 
 @router.post("/projects/{slug}/import/yaml")
@@ -162,6 +231,9 @@ async def import_yaml(
         data = yaml.safe_load(content)
         if not isinstance(data, dict):
             raise ValueError("YAML root must be a dictionary of roles")
+
+        if len(data) > 200:
+            raise HTTPException(400, "Too many roles in YAML (max 200)")
 
         # Helper to guess HTTP method
         def guess_method(action: str) -> str:
@@ -271,6 +343,9 @@ async def import_yaml(
                         await ensure_role(parent_name)
 
         # Second pass: Process permissions and resources
+        new_edges: list[tuple[str, str]] = []
+        perm_count = 0
+
         for role_name, modules in data.items():
             if not role_name or not isinstance(modules, dict):
                 continue
@@ -296,6 +371,7 @@ async def import_yaml(
                                         parent_role_id=parent_id, child_role_id=role_id
                                     )
                                 )
+                                new_edges.append((parent_id, role_id))
                     continue
 
                 if not isinstance(actions, dict):
@@ -305,6 +381,11 @@ async def import_yaml(
                     if not action_name:
                         continue
                     perm_name = f"{module_name}.{action_name}"
+                    perm_count += 1
+                    if perm_count > 500:
+                        raise HTTPException(
+                            400, "Too many permissions in YAML (max 500)"
+                        )
 
                     # Create Permission
                     perm = await session.scalar(
@@ -368,6 +449,14 @@ async def import_yaml(
                                 permission_id=perm.id, resource_id=res.id
                             )
                         )
+
+        if len(new_edges) > 1000:
+            await session.rollback()
+            raise HTTPException(400, "Too many inheritance edges (max 1000)")
+
+        if _has_cycle(new_edges):
+            await session.rollback()
+            raise HTTPException(400, "Cycle detected in role inheritance")
 
         await session.commit()
         logger.info("import.yaml project=%s roles=%d", slug, len(role_map))

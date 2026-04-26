@@ -18,6 +18,8 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter(tags=["roles"])
 
+MAX_INHERITANCE_DEPTH = 32
+
 
 async def would_create_cycle(
     child_id: str, parent_id: str, session: AsyncSession
@@ -31,11 +33,12 @@ async def would_create_cycle(
     # SQLite supports recursive CTEs since 3.8.3
     sql = text("""
         WITH RECURSIVE descendants AS (
-            SELECT :child_id AS id
+            SELECT :child_id AS id, 0 AS depth
             UNION ALL
-            SELECT ri.child_role_id
+            SELECT ri.child_role_id, d.depth + 1
             FROM role_inheritance ri
             JOIN descendants d ON ri.parent_role_id = d.id
+            WHERE d.depth < 32
         )
         SELECT COUNT(*) FROM descendants WHERE id = :parent_id
     """)
