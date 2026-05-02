@@ -111,7 +111,7 @@ async def test_export_fastapi_deduplicates_func_names(client):
 
     # Both function definitions must be present with distinct names
     assert "async def get_api_users(" in code
-    assert "async def get_api_users_2(" in code
+    assert "async def get_api_users_1(" in code
 
     # Generated code must be valid Python
     ast.parse(code)

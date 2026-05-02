@@ -68,7 +68,7 @@ async def export_fastapi(slug: str, current_user: CurrentUser, session: DBSessio
             seen_func_names[base_name] += 1
             func_name = f"{base_name}_{seen_func_names[base_name]}"
         else:
-            seen_func_names[base_name] = 1
+            seen_func_names[base_name] = 0
             func_name = base_name
 
         # Escape double quotes in permission name to prevent
