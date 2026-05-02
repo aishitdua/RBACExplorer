@@ -388,7 +388,7 @@ async def import_yaml(
                     perm_count += 1
                     if perm_count > 500:
                         raise HTTPException(
-                            400, "Too many permissions in YAML (max 500)"
+                            400, "Too many permission assignments in YAML (max 500)"
                         )
 
                     # Create Permission

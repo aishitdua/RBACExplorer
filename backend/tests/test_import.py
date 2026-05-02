@@ -115,3 +115,17 @@ async def test_csv_import_non_utf8_returns_400(client):
     )
     assert r.status_code == 400
     assert "UTF-8" in r.json()["detail"]
+
+
+async def test_yaml_import_perm_assignment_limit_message(client):
+    """Over-limit YAML must mention 'assignment' in error, not just 'permissions'."""
+    await client.post("/api/v1/projects", json={"name": "Test"})
+    # 1 role with 502 action entries exceeds the 500 assignment limit
+    actions = "\n".join(f"    act{i}: desc" for i in range(502))
+    yaml_bytes = f"admin:\n  mod:\n{actions}\n".encode()
+    r = await client.post(
+        "/api/v1/projects/test/import/yaml",
+        files={"file": ("roles.yaml", yaml_bytes, "text/yaml")},
+    )
+    assert r.status_code == 400
+    assert "assignment" in r.json()["detail"].lower()
