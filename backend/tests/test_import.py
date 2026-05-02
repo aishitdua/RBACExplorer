@@ -102,3 +102,16 @@ async def test_yaml_import_rejects_unsupported_content_type(client):
     )
     assert r.status_code == 415
     assert "Unsupported file type" in r.json()["detail"]
+
+
+async def test_csv_import_non_utf8_returns_400(client):
+    """Non-UTF-8 CSV must return 400, not 500."""
+    await client.post("/api/v1/projects", json={"name": "Test"})
+    # Latin-1 encoded bytes — 0xe9 is 'é' in Latin-1, invalid in UTF-8
+    latin1_csv = b"method,path,description\nGET,/caf\xe9,a caf\xe9\n"
+    r = await client.post(
+        "/api/v1/projects/test/import/csv",
+        files={"file": ("data.csv", latin1_csv, "text/csv")},
+    )
+    assert r.status_code == 400
+    assert "UTF-8" in r.json()["detail"]

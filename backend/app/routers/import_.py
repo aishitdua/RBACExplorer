@@ -150,7 +150,10 @@ async def import_csv(
     content = await read_upload_with_limit(file, ALLOWED_CSV_TYPES)
 
     try:
-        string_content = content.decode("utf-8")
+        try:
+            string_content = content.decode("utf-8")
+        except UnicodeDecodeError:
+            raise HTTPException(400, "File must be UTF-8 encoded") from None
         reader = csv.DictReader(io.StringIO(string_content))
 
         created = 0
