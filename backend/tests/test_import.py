@@ -46,6 +46,19 @@ async def test_yaml_import_handles_errors_securely(client):
     assert "str(e)" not in detail
 
 
+async def test_yaml_import_integer_role_keys_returns_not_500(client):
+    """Non-string YAML keys (e.g. integer `42:`) must not crash with 500."""
+    await client.post("/api/v1/projects", json={"name": "Test"})
+    # YAML with an integer key — yaml.safe_load parses `42` as int, not str
+    yaml_bytes = b"42:\n  users:\n    list: view users\n"
+    r = await client.post(
+        "/api/v1/projects/test/import/yaml",
+        files={"file": ("roles.yaml", yaml_bytes, "text/yaml")},
+    )
+    # Must not be 500 — integer keys should be silently skipped
+    assert r.status_code != 500
+
+
 @pytest.mark.slow
 async def test_csv_import_rejects_oversized_file(client):
     """SEC-008/016: Streaming byte-count enforces 2MB limit, ignoring Content-Length."""

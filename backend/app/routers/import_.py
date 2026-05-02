@@ -348,7 +348,7 @@ async def import_yaml(
         perm_count = 0
 
         for role_name, modules in data.items():
-            if not role_name or not isinstance(modules, dict):
+            if not isinstance(role_name, str) or not isinstance(modules, dict):
                 continue
 
             role_id = role_map[role_name]
