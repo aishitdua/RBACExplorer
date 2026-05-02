@@ -2,10 +2,10 @@ import logging
 
 from fastapi import APIRouter, HTTPException
 from slugify import slugify
-from sqlalchemy import select
+from sqlalchemy import delete, select
 
 from app.dependencies import CurrentUser, DBSession, get_project_for_user_or_404
-from app.models import Project
+from app.models import Permission, Project, Resource, Role
 from app.schemas import CleanConfirm, ProjectCreate, ProjectOut
 
 logger = logging.getLogger(__name__)
@@ -81,10 +81,6 @@ async def clean_project(
     session: DBSession,
     current_user: CurrentUser,
 ):
-    from sqlalchemy import delete
-
-    from app.models import Permission, Resource, Role
-
     if body.confirm != slug:
         raise HTTPException(400, "Confirmation slug does not match")
 

@@ -4,6 +4,7 @@ from fastapi import APIRouter, HTTPException
 from sqlalchemy import select, text
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from app.dependencies import (
     CurrentUser,
@@ -48,8 +49,6 @@ async def would_create_cycle(
 
 @router.get("/projects/{slug}/roles", response_model=list[dict])
 async def list_roles(slug: str, current_user: CurrentUser, session: DBSession):
-    from sqlalchemy.orm import selectinload
-
     project = await get_project_for_user_or_404(slug, current_user, session)
 
     roles = await session.scalars(

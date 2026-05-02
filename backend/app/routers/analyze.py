@@ -7,7 +7,7 @@ from app.dependencies import (
     get_project_for_user_or_404,
     get_role_for_project_or_404,
 )
-from app.models import Permission, Resource
+from app.models import Permission, PermissionResource, Resource
 from app.routers.roles import MAX_INHERITANCE_DEPTH
 from app.schemas import AnalyzeOut, ConflictFinding, DiffOut, SimulatedResource
 
@@ -157,12 +157,8 @@ async def diff_role(
             return set()
 
         # Use ORM for the IN query (avoids SQLite binding issues)
-        from sqlalchemy import select as sa_select
-
-        from app.models import PermissionResource
-
         res_result = await session.execute(
-            sa_select(PermissionResource.resource_id).where(
+            select(PermissionResource.resource_id).where(
                 PermissionResource.permission_id.in_(list(effective_perm_ids))
             )
         )

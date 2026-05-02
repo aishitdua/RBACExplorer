@@ -1,8 +1,11 @@
+import yaml
 from fastapi import APIRouter
 from fastapi.responses import PlainTextResponse
 from sqlalchemy import select, text
+from sqlalchemy.orm import selectinload
 
 from app.dependencies import CurrentUser, DBSession, get_project_for_user_or_404
+from app.models import Role, RoleInheritance, RolePermission
 
 router = APIRouter(tags=["export"])
 
@@ -88,11 +91,6 @@ async def export_fastapi(slug: str, current_user: CurrentUser, session: DBSessio
 
 @router.get("/projects/{slug}/export/yaml", response_class=PlainTextResponse)
 async def export_yaml(slug: str, current_user: CurrentUser, session: DBSession):
-    import yaml
-    from sqlalchemy.orm import selectinload
-
-    from app.models import Role, RoleInheritance, RolePermission
-
     project = await get_project_for_user_or_404(slug, current_user, session)
 
     # Fetch Roles with inheritance and permissions
