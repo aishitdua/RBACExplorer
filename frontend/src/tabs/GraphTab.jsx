@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, useCallback } from 'react'
 import cytoscape from 'cytoscape'
 import fcose from 'cytoscape-fcose'
 import { listRoles, addParent, removeParent, deleteRole } from '../api/roles'
+import { exportYaml } from '../api/export_'
 import { listPermissions } from '../api/permissions'
 
 // Guard against mocked cytoscape in tests
@@ -234,15 +235,13 @@ export default function GraphTab({ slug }) {
 
   const handleExportYaml = async () => {
     try {
-      const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/v1/projects/${slug}/export/yaml`
-      )
-      const blob = await response.blob()
+      const blob = await exportYaml(slug)
       const url = window.URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = url
       a.download = `${slug}-rbac.yaml`
       a.click()
+      window.URL.revokeObjectURL(url)
     } catch (err) {
       console.error('Export failed', err)
     }
