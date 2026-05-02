@@ -48,6 +48,8 @@ async def export_fastapi(slug: str, current_user: CurrentUser, session: DBSessio
         "",
     ]
 
+    seen_func_names: dict[str, int] = {}
+
     for row in rows:
         method = row.method.lower()
         # Sanitize path for function name
@@ -58,7 +60,13 @@ async def export_fastapi(slug: str, current_user: CurrentUser, session: DBSessio
             .replace("}", "")
             .replace("-", "_")
         )
-        func_name = f"{method}_{safe_path}" if safe_path else method
+        base_name = f"{method}_{safe_path}" if safe_path else method
+        if base_name in seen_func_names:
+            seen_func_names[base_name] += 1
+            func_name = f"{base_name}_{seen_func_names[base_name]}"
+        else:
+            seen_func_names[base_name] = 1
+            func_name = base_name
 
         # Escape double quotes in permission name to prevent
         # injection in the generated Python code

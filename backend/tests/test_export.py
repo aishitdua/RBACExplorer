@@ -74,3 +74,46 @@ async def test_resource_create_rejects_path_too_long(client):
         json={"method": "GET", "path": long_path},
     )
     assert r.status_code == 422
+
+
+async def test_export_fastapi_deduplicates_func_names(client):
+    """Paths that sanitize to the same identifier must get unique function names."""
+    await client.post("/api/v1/projects", json={"name": "Test"})
+    perm1 = (
+        await client.post("/api/v1/projects/test/permissions", json={"name": "p1"})
+    ).json()
+    perm2 = (
+        await client.post("/api/v1/projects/test/permissions", json={"name": "p2"})
+    ).json()
+    # /api/users and /api_users both sanitize to 'api_users'
+    res1 = (
+        await client.post(
+            "/api/v1/projects/test/resources",
+            json={"method": "GET", "path": "/api/users"},
+        )
+    ).json()
+    res2 = (
+        await client.post(
+            "/api/v1/projects/test/resources",
+            json={"method": "GET", "path": "/api_users"},
+        )
+    ).json()
+    await client.post(
+        f"/api/v1/projects/test/permissions/{perm1['id']}/resources/{res1['id']}"
+    )
+    await client.post(
+        f"/api/v1/projects/test/permissions/{perm2['id']}/resources/{res2['id']}"
+    )
+
+    r = await client.get("/api/v1/projects/test/export/fastapi")
+    assert r.status_code == 200
+    code = r.text
+
+    # Both function definitions must be present with distinct names
+    assert "async def get_api_users(" in code
+    assert "async def get_api_users_2(" in code
+
+    # Generated code must be valid Python
+    import ast
+
+    ast.parse(code)
