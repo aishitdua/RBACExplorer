@@ -27,10 +27,10 @@ async def test_detects_empty_role(client):
 
 async def test_analyze_redundant_assignment_scoped_to_project(client):
     """
-    Redundant assignment detection must work correctly per project and must not
-    return findings from other projects.
+    Redundant assignment detection must be project-scoped: findings in one project
+    must not appear in another, even when both have similar inheritance structures.
     """
-    # Project A: child inherits from parent, both have 'read' permission → redundant
+    # Project A: child_a inherits parent_a, both have 'read' → 1 redundant finding
     await client.post("/api/v1/projects", json={"name": "A"})
     parent_a = (
         await client.post("/api/v1/projects/a/roles", json={"name": "parent"})
@@ -52,17 +52,43 @@ async def test_analyze_redundant_assignment_scoped_to_project(client):
         json={"parent_role_id": parent_a["id"]},
     )
 
-    # Project B: completely separate, no redundancy
+    # Project B: mirror structure — child_b inherits parent_b, both have 'read'
+    # → 1 redundant finding
     await client.post("/api/v1/projects", json={"name": "B"})
+    parent_b = (
+        await client.post("/api/v1/projects/b/roles", json={"name": "parent_b"})
+    ).json()
+    child_b = (
+        await client.post("/api/v1/projects/b/roles", json={"name": "child_b"})
+    ).json()
+    perm_b = (
+        await client.post("/api/v1/projects/b/permissions", json={"name": "read"})
+    ).json()
+    await client.post(
+        f"/api/v1/projects/b/roles/{child_b['id']}/permissions/{perm_b['id']}"
+    )
+    await client.post(
+        f"/api/v1/projects/b/roles/{parent_b['id']}/permissions/{perm_b['id']}"
+    )
+    await client.post(
+        f"/api/v1/projects/b/roles/{child_b['id']}/parents",
+        json={"parent_role_id": parent_b["id"]},
+    )
 
-    r = await client.get("/api/v1/projects/a/analyze")
-    assert r.status_code == 200
-    findings = r.json()["findings"]
-    redundant = [f for f in findings if f["type"] == "redundant_assignment"]
-    assert len(redundant) == 1
-    assert redundant[0]["detail"]["role_name"] == "child"
+    # Project A: exactly 1 redundant_assignment for "child" — not contaminated by B
+    r_a = await client.get("/api/v1/projects/a/analyze")
+    assert r_a.status_code == 200
+    redundant_a = [
+        f for f in r_a.json()["findings"] if f["type"] == "redundant_assignment"
+    ]
+    assert len(redundant_a) == 1
+    assert redundant_a[0]["detail"]["role_name"] == "child"
 
-    # Project B should have zero findings
-    r2 = await client.get("/api/v1/projects/b/analyze")
-    assert r2.status_code == 200
-    assert r2.json()["findings"] == []
+    # Project B: exactly 1 redundant_assignment for "child_b" — not contaminated by A
+    r_b = await client.get("/api/v1/projects/b/analyze")
+    assert r_b.status_code == 200
+    redundant_b = [
+        f for f in r_b.json()["findings"] if f["type"] == "redundant_assignment"
+    ]
+    assert len(redundant_b) == 1
+    assert redundant_b[0]["detail"]["role_name"] == "child_b"
