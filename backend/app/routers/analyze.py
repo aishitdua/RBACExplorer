@@ -60,7 +60,9 @@ async def analyze_project(slug: str, current_user: CurrentUser, session: DBSessi
     result = await session.execute(
         text(f"""
         WITH RECURSIVE ancestors AS (
-            SELECT parent_role_id, child_role_id, 0 AS depth FROM role_inheritance
+            SELECT ri.parent_role_id, ri.child_role_id, 0 AS depth
+            FROM role_inheritance ri
+            JOIN roles r ON r.id = ri.child_role_id AND r.project_id = :pid
             UNION ALL
             SELECT ri.parent_role_id, a.child_role_id, a.depth + 1
             FROM role_inheritance ri
