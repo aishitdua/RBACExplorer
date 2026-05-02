@@ -114,6 +114,4 @@ async def test_export_fastapi_deduplicates_func_names(client):
     assert "async def get_api_users_2(" in code
 
     # Generated code must be valid Python
-    import ast
-
     ast.parse(code)
