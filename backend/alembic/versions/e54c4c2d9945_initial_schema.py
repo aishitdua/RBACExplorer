@@ -20,114 +20,123 @@ depends_on: str | Sequence[str] | None = None
 
 
 def upgrade() -> None:
-    op.create_table(
-        "projects",
-        sa.Column("id", sa.String(36), primary_key=True),
-        sa.Column("slug", sa.String(128), unique=True, nullable=False),
-        sa.Column("name", sa.String(), nullable=False),
-        sa.Column("description", sa.String(), nullable=True),
-        sa.Column(
-            "created_at", sa.DateTime(timezone=True), server_default=sa.func.now()
-        ),
-    )
-    op.create_table(
-        "roles",
-        sa.Column("id", sa.String(36), primary_key=True),
-        sa.Column(
-            "project_id",
-            sa.String(36),
-            sa.ForeignKey("projects.id", ondelete="CASCADE"),
-            nullable=False,
-            index=True,
-        ),
-        sa.Column("name", sa.String(), nullable=False),
-        sa.Column("description", sa.String(), nullable=True),
-        sa.Column("color", sa.String(7), nullable=True),
-        sa.Column(
-            "created_at", sa.DateTime(timezone=True), server_default=sa.func.now()
-        ),
-        sa.UniqueConstraint("project_id", "name"),
-    )
-    op.create_table(
-        "role_inheritance",
-        sa.Column(
-            "parent_role_id",
-            sa.String(36),
-            sa.ForeignKey("roles.id", ondelete="CASCADE"),
-            primary_key=True,
-            index=True,
-        ),
-        sa.Column(
-            "child_role_id",
-            sa.String(36),
-            sa.ForeignKey("roles.id", ondelete="CASCADE"),
-            primary_key=True,
-            index=True,
-        ),
-    )
-    op.create_table(
-        "permissions",
-        sa.Column("id", sa.String(36), primary_key=True),
-        sa.Column(
-            "project_id",
-            sa.String(36),
-            sa.ForeignKey("projects.id", ondelete="CASCADE"),
-            nullable=False,
-            index=True,
-        ),
-        sa.Column("name", sa.String(), nullable=False),
-        sa.Column("description", sa.String(), nullable=True),
-        sa.UniqueConstraint("project_id", "name"),
-    )
-    op.create_table(
-        "role_permissions",
-        sa.Column(
-            "role_id",
-            sa.String(36),
-            sa.ForeignKey("roles.id", ondelete="CASCADE"),
-            primary_key=True,
-            index=True,
-        ),
-        sa.Column(
-            "permission_id",
-            sa.String(36),
-            sa.ForeignKey("permissions.id", ondelete="CASCADE"),
-            primary_key=True,
-            index=True,
-        ),
-    )
-    op.create_table(
-        "resources",
-        sa.Column("id", sa.String(36), primary_key=True),
-        sa.Column(
-            "project_id",
-            sa.String(36),
-            sa.ForeignKey("projects.id", ondelete="CASCADE"),
-            nullable=False,
-            index=True,
-        ),
-        sa.Column("method", sa.String(10), nullable=False),
-        sa.Column("path", sa.String(), nullable=False),
-        sa.Column("description", sa.String(), nullable=True),
-        sa.UniqueConstraint("project_id", "method", "path"),
-    )
-    op.create_table(
-        "permission_resources",
-        sa.Column(
-            "permission_id",
-            sa.String(36),
-            sa.ForeignKey("permissions.id", ondelete="CASCADE"),
-            primary_key=True,
-            index=True,
-        ),
-        sa.Column(
-            "resource_id",
-            sa.String(36),
-            sa.ForeignKey("resources.id", ondelete="CASCADE"),
-            primary_key=True,
-            index=True,
-        ),
-    )
+    existing = set(sa.inspect(op.get_bind()).get_table_names())
+
+    if "projects" not in existing:
+        op.create_table(
+            "projects",
+            sa.Column("id", sa.String(36), primary_key=True),
+            sa.Column("slug", sa.String(128), unique=True, nullable=False),
+            sa.Column("name", sa.String(), nullable=False),
+            sa.Column("description", sa.String(), nullable=True),
+            sa.Column(
+                "created_at", sa.DateTime(timezone=True), server_default=sa.func.now()
+            ),
+        )
+    if "roles" not in existing:
+        op.create_table(
+            "roles",
+            sa.Column("id", sa.String(36), primary_key=True),
+            sa.Column(
+                "project_id",
+                sa.String(36),
+                sa.ForeignKey("projects.id", ondelete="CASCADE"),
+                nullable=False,
+                index=True,
+            ),
+            sa.Column("name", sa.String(), nullable=False),
+            sa.Column("description", sa.String(), nullable=True),
+            sa.Column("color", sa.String(7), nullable=True),
+            sa.Column(
+                "created_at", sa.DateTime(timezone=True), server_default=sa.func.now()
+            ),
+            sa.UniqueConstraint("project_id", "name"),
+        )
+    if "role_inheritance" not in existing:
+        op.create_table(
+            "role_inheritance",
+            sa.Column(
+                "parent_role_id",
+                sa.String(36),
+                sa.ForeignKey("roles.id", ondelete="CASCADE"),
+                primary_key=True,
+                index=True,
+            ),
+            sa.Column(
+                "child_role_id",
+                sa.String(36),
+                sa.ForeignKey("roles.id", ondelete="CASCADE"),
+                primary_key=True,
+                index=True,
+            ),
+        )
+    if "permissions" not in existing:
+        op.create_table(
+            "permissions",
+            sa.Column("id", sa.String(36), primary_key=True),
+            sa.Column(
+                "project_id",
+                sa.String(36),
+                sa.ForeignKey("projects.id", ondelete="CASCADE"),
+                nullable=False,
+                index=True,
+            ),
+            sa.Column("name", sa.String(), nullable=False),
+            sa.Column("description", sa.String(), nullable=True),
+            sa.UniqueConstraint("project_id", "name"),
+        )
+    if "role_permissions" not in existing:
+        op.create_table(
+            "role_permissions",
+            sa.Column(
+                "role_id",
+                sa.String(36),
+                sa.ForeignKey("roles.id", ondelete="CASCADE"),
+                primary_key=True,
+                index=True,
+            ),
+            sa.Column(
+                "permission_id",
+                sa.String(36),
+                sa.ForeignKey("permissions.id", ondelete="CASCADE"),
+                primary_key=True,
+                index=True,
+            ),
+        )
+    if "resources" not in existing:
+        op.create_table(
+            "resources",
+            sa.Column("id", sa.String(36), primary_key=True),
+            sa.Column(
+                "project_id",
+                sa.String(36),
+                sa.ForeignKey("projects.id", ondelete="CASCADE"),
+                nullable=False,
+                index=True,
+            ),
+            sa.Column("method", sa.String(10), nullable=False),
+            sa.Column("path", sa.String(), nullable=False),
+            sa.Column("description", sa.String(), nullable=True),
+            sa.UniqueConstraint("project_id", "method", "path"),
+        )
+    if "permission_resources" not in existing:
+        op.create_table(
+            "permission_resources",
+            sa.Column(
+                "permission_id",
+                sa.String(36),
+                sa.ForeignKey("permissions.id", ondelete="CASCADE"),
+                primary_key=True,
+                index=True,
+            ),
+            sa.Column(
+                "resource_id",
+                sa.String(36),
+                sa.ForeignKey("resources.id", ondelete="CASCADE"),
+                primary_key=True,
+                index=True,
+            ),
+        )
 
 
 def downgrade() -> None:
